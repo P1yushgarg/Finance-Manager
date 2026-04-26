@@ -1,7 +1,14 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const router = express.Router();
+
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', {
+    expiresIn: '30d',
+  });
+};
 
 router.post('/register', async (req, res) => {
   try {
@@ -19,12 +26,20 @@ router.post('/register', async (req, res) => {
     const user = new User({
       name,
       email,
-      password 
+      password
     });
 
     await user.save();
-    
-    res.status(201).json({ message: 'User registered successfully!' });
+
+    res.status(201).json({
+      message: 'User registered successfully!',
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
@@ -45,12 +60,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    if (user.password !== password) {
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    res.status(200).json({ 
-      message: 'Login successful', 
+    res.status(200).json({
+      message: 'Login successful',
+      token: generateToken(user._id),
       user: {
         id: user._id,
         name: user.name,

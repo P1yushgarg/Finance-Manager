@@ -1,34 +1,134 @@
-import { useState } from 'react';
-import { ArrowUpRight, ArrowDownRight, IndianRupee, Edit2, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowUpRight, IndianRupee, Edit2, Check, Trash2, X } from 'lucide-react';
 import AddTransactionForm from '../../components/forms/AddTransactionForm';
 import CategoryChart from '../../components/charts/CategoryChart';
 import DailySpendChart from '../../components/charts/DailySpendChart';
 
 const Overview = () => {
-    const [transactions, setTransactions] = useState([
-        { id: 1, amount: 2500, category: 'Groceries', method: 'UPI', date: '02/06/2026' },
-        { id: 2, amount: 1500, category: 'Dining', method: 'Card', date: '05/06/2026' },
-        { id: 3, amount: 850, category: 'Entertainment', method: 'UPI', date: '10/06/2026' },
-        { id: 4, amount: 3200, category: 'Shopping', method: 'Card', date: '15/06/2026' },
-    ]);
-
-    // Editable Balances States
-    const [income, setIncome] = useState(80000);
-    const [isEditingIncome, setIsEditingIncome] = useState(false);
-    const [tempIncome, setTempIncome] = useState('');
+    const [transactions, setTransactions] = useState([]);
+    const [alerts, setAlerts] = useState({});
 
     const [balance, setBalance] = useState(142000);
     const [isEditingBalance, setIsEditingBalance] = useState(false);
     const [tempBalance, setTempBalance] = useState('');
 
-    const handleAddTransaction = (newTx) => {
-        setTransactions(prev => [newTx, ...prev]);
-        setBalance(prev => prev - newTx.amount);
+    const [editingTxId, setEditingTxId] = useState(null);
+    const [editTxData, setEditTxData] = useState({});
+
+    useEffect(() => {
+        const fetchAllData = async () => {
+            try {
+                const userObj = JSON.parse(localStorage.getItem('user'));
+                if (userObj && userObj.id) {
+                    const [txRes, alertsRes] = await Promise.all([
+                        fetch(`/api/transactions?userId=${userObj.id}`),
+                        fetch(`/api/alerts?userId=${userObj.id}`)
+                    ]);
+
+                    if (txRes.ok) {
+                        const txData = await txRes.json();
+                        setTransactions(txData);
+                    }
+                    if (alertsRes.ok) {
+                        const alertsData = await alertsRes.json();
+                        const activeAlerts = {};
+                        alertsData.forEach(alert => {
+                            activeAlerts[alert.category] = alert.thresholdAmount;
+                        });
+                        setAlerts(activeAlerts);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch dashboard data", err);
+            }
+        };
+        fetchAllData();
+    }, []);
+
+    const handleAddTransaction = async (newTx) => {
+        try {
+            const userObj = JSON.parse(localStorage.getItem('user'));
+            if (!userObj || !userObj.id) return;
+
+            const txPayload = {
+                user: userObj.id,
+                recipient: newTx.recipient,
+                amount: newTx.amount,
+                category: newTx.category,
+                method: newTx.method
+            };
+
+            const response = await fetch('/api/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(txPayload)
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                const newAllTx = [data, ...transactions];
+                setTransactions(newAllTx);
+                setBalance(prev => prev - data.amount);
+
+                const methodKey = data.method.toLowerCase();
+                const newTotalSpent = newAllTx.reduce((a, b) => a + b.amount, 0);
+                const todayStr = new Date().toLocaleDateString();
+                const dailyTotal = newAllTx.filter(t => new Date(t.date).toLocaleDateString() === todayStr).reduce((a, b) => a + b.amount, 0);
+                const currentMethodTotal = newAllTx.filter(t => t.method.toLowerCase() === methodKey).reduce((a, b) => a + b.amount, 0);
+
+                let messages = [];
+                if (alerts.monthly !== undefined && newTotalSpent > Number(alerts.monthly)) {
+                    messages.push(`Monthly Overspend: Total is ₹${newTotalSpent} (Limit: ₹${alerts.monthly})`);
+                }
+                if (alerts.daily !== undefined && dailyTotal > Number(alerts.daily)) {
+                    messages.push(`Daily Overspend: Today's total is ₹${dailyTotal} (Limit: ₹${alerts.daily})`);
+                }
+                if (alerts[methodKey] !== undefined && ['upi', 'cash', 'bank', 'card'].includes(methodKey)) {
+                    if (currentMethodTotal > Number(alerts[methodKey])) {
+                        messages.push(`${data.method} Overspend: Total is ₹${currentMethodTotal} (Limit: ₹${alerts[methodKey]})`);
+                    }
+                }
+                if (messages.length > 0) {
+                    window.alert("⚠️ ALERT LIMITS EXCEEDED ⚠️\n\n" + messages.join('\n'));
+                }
+            }
+        } catch (err) {
+            console.error("Failed to add transaction", err);
+        }
     };
 
-    const saveIncome = () => {
-        if (tempIncome && !isNaN(tempIncome)) setIncome(parseFloat(tempIncome));
-        setIsEditingIncome(false);
+    const handleDeleteTx = async (id, amount) => {
+        if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+        try {
+            const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setTransactions(prev => prev.filter(tx => tx._id !== id));
+                setBalance(prev => prev + amount); // Restoring balance from deleted transaction
+            } else {
+                window.alert("Failed to delete transaction securely.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSaveEditTx = async (id) => {
+        try {
+            const res = await fetch(`/api/transactions/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editTxData)
+            });
+            const updatedTx = await res.json();
+            if (res.ok) {
+                const oldTx = transactions.find(t => t._id === id);
+                setBalance(prev => prev + oldTx.amount - updatedTx.amount); // Adjust balance diff
+                setTransactions(prev => prev.map(tx => tx._id === id ? updatedTx : tx));
+                setEditingTxId(null);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const saveBalance = () => {
@@ -49,7 +149,7 @@ const Overview = () => {
 
             {/* TOP ROW: Large Stat Cards */}
             <div className="dashboard-grid animate-slide-up" style={{ marginBottom: '3rem' }}>
-                <div className="col-span-4">
+                <div className="col-span-6">
                     <EditableStatCard
                         title="Total Balance"
                         amount={balance}
@@ -61,24 +161,12 @@ const Overview = () => {
                         saveFunc={saveBalance}
                     />
                 </div>
-                <div className="col-span-4">
+                <div className="col-span-6">
                     <StatCard
                         title="Total Spent"
                         amount={totalSpent}
                         icon={<ArrowUpRight size={32} color="var(--danger)" />}
                         isNegative
-                    />
-                </div>
-                <div className="col-span-4">
-                    <EditableStatCard
-                        title="Total Income"
-                        amount={income}
-                        icon={<ArrowDownRight size={32} color="var(--success)" />}
-                        isEditing={isEditingIncome}
-                        setIsEditing={setIsEditingIncome}
-                        tempValue={tempIncome}
-                        setTempValue={setTempIncome}
-                        saveFunc={saveIncome}
                     />
                 </div>
             </div>
@@ -112,17 +200,58 @@ const Overview = () => {
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                                {transactions.slice(0, 7).map(tx => (
-                                    <div key={tx.id} className="flex-between" style={{ padding: '0.75rem 0', borderBottom: '1px solid var(--border)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span style={{ fontWeight: 500, fontSize: '1rem' }}>{tx.category}</span>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{tx.method} • {tx.date}</span>
+                                {transactions.slice(0, 7).map(tx => {
+                                    const isEditing = editingTxId === tx._id;
+
+                                    if (isEditing) {
+                                        return (
+                                            <div key={tx._id} style={{ padding: '1rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.05)', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                    <input type="text" className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} placeholder="Recipient" value={editTxData.recipient} onChange={e => setEditTxData({...editTxData, recipient: e.target.value})} />
+                                                    <select className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} value={editTxData.category} onChange={e => setEditTxData({...editTxData, category: e.target.value})}>
+                                                        {['Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 'Bills & Utilities', 'Groceries', 'Healthcare', 'Others'].map(c => <option key={c} value={c}>{c}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                    <select className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} value={editTxData.method} onChange={e => setEditTxData({...editTxData, method: e.target.value})}>
+                                                        {['UPI', 'Card', 'Cash', 'Bank'].map(m => <option key={m} value={m}>{m}</option>)}
+                                                    </select>
+                                                    <input type="number" className="input-field" style={{ flex: 1, minWidth: '100px', padding: '0.6rem' }} placeholder="Amount" value={editTxData.amount} onChange={e => setEditTxData({...editTxData, amount: Number(e.target.value)})} />
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                                                    <button className="btn-icon-soft" style={{ padding: '0.5rem 1rem', borderRadius: '8px' }} onClick={() => setEditingTxId(null)}>
+                                                        <X size={16} style={{ marginRight: '0.3rem' }} /> Cancel
+                                                    </button>
+                                                    <button className="btn-primary" style={{ padding: '0.5rem 1rem', borderRadius: '8px' }} onClick={() => handleSaveEditTx(tx._id)}>
+                                                        <Check size={16} style={{ marginRight: '0.3rem' }} /> Save
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div key={tx._id} className="flex-between" style={{ padding: '0.8rem 0.5rem', borderBottom: '1px solid var(--border)', transition: 'background 0.2s', borderRadius: '8px' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontWeight: 500, fontSize: '1.05rem', color: 'var(--text-main)' }}>{tx.recipient || tx.category}</span>
+                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{tx.category} • {tx.method} • {new Date(tx.date).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--text-main)' }}>-₹{tx.amount.toLocaleString()}</span>
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button onClick={() => { setEditingTxId(tx._id); setEditTxData(tx); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = 'var(--primary)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'} title="Edit Transaction">
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteTx(tx._id, tx.amount)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = 'var(--error)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'} title="Delete Transaction">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <span style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)' }}>-₹{tx.amount.toLocaleString()}</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

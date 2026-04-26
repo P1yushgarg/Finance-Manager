@@ -7,20 +7,31 @@ const Signup = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
-    const handleSignup = (e) => {
+    const handleSignup = async (e) => {
         e.preventDefault();
         if (name && email && password) {
-            // Save user details to localStorage
-            const userData = { name, email, password };
-            localStorage.setItem('userData', JSON.stringify(userData));
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await response.json();
 
-            // Set active session
-            sessionStorage.setItem('isLoggedIn', 'true');
-
-            // Notify other components (like Navbar) and Redirect to dashboard
-            window.dispatchEvent(new Event('auth-change'));
-            navigate('/dashboard');
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    window.dispatchEvent(new Event('auth-change'));
+                    navigate('/dashboard');
+                } else {
+                    setError(data.error || 'Signup failed');
+                }
+            } catch (err) {
+                setError('Network error. Please try again.');
+            }
         }
     };
 
@@ -31,6 +42,12 @@ const Signup = () => {
                     <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>Create Account</h2>
                     <p style={{ color: 'var(--text-muted)' }}>Start your financial journey with us</p>
                 </div>
+
+                {error && (
+                    <div style={{ padding: '0.75rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem', textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                     <div>

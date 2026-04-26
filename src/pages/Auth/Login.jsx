@@ -8,33 +8,30 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        const storedData = localStorage.getItem('userData');
-        if (storedData) {
-            const userData = JSON.parse(storedData);
-            setEmail(userData.email);
-            setPassword(userData.password);
-        }
-    }, []);
-
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
 
         if (email && password) {
-            const storedData = localStorage.getItem('userData');
-
-            if (storedData) {
-                const userData = JSON.parse(storedData);
-                if (userData.email === email && userData.password === password) {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     sessionStorage.setItem('isLoggedIn', 'true');
                     window.dispatchEvent(new Event('auth-change'));
                     navigate('/dashboard');
                 } else {
-                    setError('Invalid email or password');
+                    setError(data.error || 'Invalid email or password');
                 }
-            } else {
-                setError('No account found. Please sign up first.');
+            } catch (err) {
+                setError('Network error. Please try again.');
             }
         }
     };

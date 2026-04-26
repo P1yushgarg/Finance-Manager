@@ -1,212 +1,279 @@
-import { useState } from 'react';
-import { Bell, Calendar, IndianRupee, Clock, CheckCircle, AlertTriangle, Target, Wallet, Smartphone, CreditCard, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Clock, AlertTriangle, Target, Wallet, Smartphone, CreditCard, Trash2, ShieldCheck, ChevronRight } from 'lucide-react';
 
 const Alerts = () => {
-    const [monthlyAlert, setMonthlyAlert] = useState('50000');
-    const [dailyAlert, setDailyAlert] = useState('2000');
-    const [upiAlert, setUpiAlert] = useState('10000');
-    const [cashAlert, setCashAlert] = useState('5000');
-    const [bankAlert, setBankAlert] = useState('30000');
-    const [isSaved, setIsSaved] = useState(false);
-
-    const [activeThresholds, setActiveThresholds] = useState({
-        monthly: '50000',
-        daily: '2000',
-        upi: '10000',
-        cash: '5000',
-        bank: '30000'
+    const [fetchedAlerts, setFetchedAlerts] = useState({
+        monthly: null,
+        daily: null,
+        upi: null,
+        cash: null,
+        bank: null
     });
 
-    const handleSavePrimary = (e) => {
-        e.preventDefault();
-        setActiveThresholds({
-            monthly: monthlyAlert,
-            daily: dailyAlert,
-            upi: upiAlert,
-            cash: cashAlert,
-            bank: bankAlert
-        });
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
+    const [inputs, setInputs] = useState({
+        monthly: '',
+        daily: '',
+        upi: '',
+        cash: '',
+        bank: ''
+    });
+
+    useEffect(() => {
+        const fetchAlerts = async () => {
+            try {
+                const userObj = JSON.parse(localStorage.getItem('user'));
+                if (userObj && userObj.id) {
+                    const response = await fetch(`/api/alerts?userId=${userObj.id}`);
+                    const data = await response.json();
+                    if (response.ok && data.length > 0) {
+                        const fetched = { monthly: null, daily: null, upi: null, cash: null, bank: null };
+                        const initInputs = { monthly: '', daily: '', upi: '', cash: '', bank: '' };
+                        
+                        data.forEach(alert => {
+                            if (alert.category in fetched) {
+                                fetched[alert.category] = alert.thresholdAmount.toString();
+                                initInputs[alert.category] = alert.thresholdAmount.toString();
+                            }
+                        });
+                        setFetchedAlerts(fetched);
+                        setInputs(initInputs);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch alerts", err);
+            }
+        };
+        fetchAlerts();
+    }, []);
+
+    const handleSaveAlert = async (category) => {
+        const amount = inputs[category];
+        if (!amount) return;
+        
+        try {
+            const userObj = JSON.parse(localStorage.getItem('user'));
+            if (!userObj || !userObj.id) return;
+
+            await fetch('/api/alerts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user: userObj.id,
+                    category: category,
+                    thresholdAmount: Number(amount)
+                })
+            });
+
+            setFetchedAlerts(prev => ({ ...prev, [category]: amount }));
+        } catch (error) {
+            console.error("Failed to save alert", error);
+        }
     };
 
-    const handleRemoveAlert = (type) => {
-        setActiveThresholds(prev => ({ ...prev, [type]: '' }));
-        if (type === 'monthly') setMonthlyAlert('');
-        if (type === 'daily') setDailyAlert('');
-        if (type === 'upi') setUpiAlert('');
-        if (type === 'cash') setCashAlert('');
-        if (type === 'bank') setBankAlert('');
+    const handleRemoveAlert = async (category) => {
+        try {
+            const userObj = JSON.parse(localStorage.getItem('user'));
+            if (!userObj || !userObj.id) return;
+
+            await fetch('/api/alerts', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: userObj.id, category })
+            });
+
+            setFetchedAlerts(prev => ({ ...prev, [category]: null }));
+            setInputs(prev => ({ ...prev, [category]: '' }));
+        } catch (error) {
+            console.error("Failed to delete alert", error);
+        }
     };
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
-            <header className="flex-between" style={{ marginBottom: '2rem' }}>
+            <header className="flex-between" style={{ marginBottom: '3rem' }}>
                 <div>
-                    <h1 className="text-hero" style={{ fontSize: '2.5rem' }}>Alert System</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>Set budget thresholds to receive notifications when you overspend.</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                        <div style={{ padding: '0.6rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: '10px', color: 'var(--primary)' }}>
+                            <Target size={24} />
+                        </div>
+                        <h1 className="text-hero" style={{ fontSize: '2.5rem' }}>Spending Limits</h1>
+                    </div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Configure interactive boundaries to receive pop-ups and prevent overspending.</p>
                 </div>
             </header>
 
             <div className="dashboard-grid">
-
-                {/* Active Alerts Configuration */}
-                <div className="col-span-8 animate-slide-up">
-                    <form className="glass-panel" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }} onSubmit={handleSavePrimary}>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
-                            <div style={{ padding: '0.8rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', color: 'var(--primary)' }}>
-                                <Bell size={24} />
-                            </div>
+                
+                {/* Information Card occupying 2 columns in a large setup or 1 row */}
+                <div className="col-span-12 animate-slide-up">
+                    <div style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%)', border: '1px solid rgba(99, 102, 241, 0.2)', padding: '1.5rem 2rem', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                            <AlertTriangle size={32} color="var(--primary)" />
                             <div>
-                                <h3 style={{ fontSize: '1.4rem', fontWeight: 600 }}>Spending Thresholds</h3>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Define your hard limits for the given timeframe.</p>
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.2rem' }}>Real-time Transaction Protection</h3>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Any logged expenses exceeding these boundaries will immediately trigger a system warning alert.</p>
                             </div>
                         </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
-                            {/* Monthly Alert Limit */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div className="flex-between">
-                                    <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Calendar size={18} color="var(--primary)" />
-                                        Monthly Limit
-                                    </label>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>90% utilization</span>
-                                </div>
-                                <div className="input-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '0 0.8rem', border: '1px solid var(--border)' }}>
-                                    <IndianRupee size={18} color="var(--text-muted)" />
-                                    <input type="number" className="input-field input-ghost" style={{ border: 'none', background: 'transparent', flex: 1, padding: '0.6rem 0.5rem', maxWidth: 'none' }} value={monthlyAlert} onChange={(e) => setMonthlyAlert(e.target.value)} placeholder="e.g. 50000" />
-                                </div>
-                            </div>
-
-                            {/* Daily Alert Limit */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div className="flex-between">
-                                    <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Clock size={18} color="var(--secondary)" />
-                                        Daily Trigger
-                                    </label>
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>immediate</span>
-                                </div>
-                                <div className="input-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '0 0.8rem', border: '1px solid var(--border)' }}>
-                                    <IndianRupee size={18} color="var(--text-muted)" />
-                                    <input type="number" className="input-field input-ghost" style={{ border: 'none', background: 'transparent', flex: 1, padding: '0.6rem 0.5rem', maxWidth: 'none' }} value={dailyAlert} onChange={(e) => setDailyAlert(e.target.value)} placeholder="e.g. 2000" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Payment Method Limits */}
-                        <div style={{ paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', marginTop: '0.5rem' }}>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Payment Method Limits</h3>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Set specific alerts for different payment types.</p>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                            {/* UPI */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Smartphone size={16} color="#a855f7" /> UPI Limit
-                                </label>
-                                <div className="input-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '0 0.8rem', border: '1px solid var(--border)' }}>
-                                    <IndianRupee size={16} color="var(--text-muted)" />
-                                    <input type="number" className="input-field input-ghost" style={{ border: 'none', background: 'transparent', flex: 1, padding: '0.6rem 0.5rem', maxWidth: 'none' }} value={upiAlert} onChange={(e) => setUpiAlert(e.target.value)} />
-                                </div>
-                            </div>
-                            {/* Cash */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Wallet size={16} color="#10b981" /> Cash Limit
-                                </label>
-                                <div className="input-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '0 0.8rem', border: '1px solid var(--border)' }}>
-                                    <IndianRupee size={16} color="var(--text-muted)" />
-                                    <input type="number" className="input-field input-ghost" style={{ border: 'none', background: 'transparent', flex: 1, padding: '0.6rem 0.5rem', maxWidth: 'none' }} value={cashAlert} onChange={(e) => setCashAlert(e.target.value)} />
-                                </div>
-                            </div>
-                            {/* Bank */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                                <label style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <CreditCard size={16} color="#3b82f6" /> Bank Transfer
-                                </label>
-                                <div className="input-group" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', padding: '0 0.8rem', border: '1px solid var(--border)' }}>
-                                    <IndianRupee size={16} color="var(--text-muted)" />
-                                    <input type="number" className="input-field input-ghost" style={{ border: 'none', background: 'transparent', flex: 1, padding: '0.6rem 0.5rem', maxWidth: 'none' }} value={bankAlert} onChange={(e) => setBankAlert(e.target.value)} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                            <button type="submit" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                {isSaved ? <><CheckCircle size={18} /> Saved Successfully</> : 'Save Thresholds'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                {/* Info Panel Only */}
-                <div className="col-span-4 animate-slide-up delay-200">
-                    <div className="glass-panel" style={{ padding: '2rem', height: '100%' }}>
-                        <div style={{ display: 'inline-flex', padding: '0.8rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '12px', color: 'var(--secondary)', marginBottom: '1.5rem' }}>
-                            <AlertTriangle size={24} />
-                        </div>
-                        <h3 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '1rem' }}>How Alerts Work</h3>
-                        <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                            We automatically monitor your transactions in real-time. If an expense pushes your total over the configured limit, finXmanager will immediately notify you via email and push notification.
-                        </p>
-
-                        <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.03)', borderRadius: '8px', borderLeft: '3px solid var(--primary)' }}>
-                            <p style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                                <strong>Tip:</strong> Setting a strict daily limit helps curb impulse purchasing habits effectively over time.
-                            </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 500 }}>
+                            Configuration Active <ChevronRight size={18} />
                         </div>
                     </div>
                 </div>
 
-                {/* Active Alerts Row (Cards at the bottom) */}
-                <div className="col-span-12 animate-slide-up delay-300" style={{ marginTop: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1.5rem' }}>
-                        <div style={{ padding: '0.6rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', color: 'var(--success)' }}>
-                            <Target size={20} />
-                        </div>
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Active Thresholds</h3>
-                    </div>
+                <div className="col-span-12" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 600 }}>Global Constraints</h2>
+                </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-                        {/* Monthly Card */}
-                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid var(--primary)', position: 'relative' }}>
-                            <button onClick={() => handleRemoveAlert('monthly')} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} title="Remove Alert" onMouseOver={(e) => e.currentTarget.style.color = 'var(--error)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={20} /></button>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}><Calendar size={18} /> Monthly Limit</div>
-                            <div style={{ fontSize: '2.2rem', fontWeight: 700 }}>{activeThresholds.monthly ? `₹ ${parseFloat(activeThresholds.monthly).toLocaleString()}` : <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 400 }}>Not Set</span>}</div>
-                        </div>
-                        {/* Daily Card */}
-                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid var(--secondary)', position: 'relative' }}>
-                            <button onClick={() => handleRemoveAlert('daily')} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} title="Remove Alert" onMouseOver={(e) => e.currentTarget.style.color = 'var(--error)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={20} /></button>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}><Clock size={18} /> Daily Trigger</div>
-                            <div style={{ fontSize: '2.2rem', fontWeight: 700 }}>{activeThresholds.daily ? `₹ ${parseFloat(activeThresholds.daily).toLocaleString()}` : <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 400 }}>Not Set</span>}</div>
-                        </div>
-                        {/* UPI Card */}
-                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid #a855f7', position: 'relative' }}>
-                            <button onClick={() => handleRemoveAlert('upi')} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} title="Remove Alert" onMouseOver={(e) => e.currentTarget.style.color = 'var(--error)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={20} /></button>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}><Smartphone size={18} /> UPI Limit</div>
-                            <div style={{ fontSize: '2.2rem', fontWeight: 700 }}>{activeThresholds.upi ? `₹ ${parseFloat(activeThresholds.upi).toLocaleString()}` : <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 400 }}>Not Set</span>}</div>
-                        </div>
-                        {/* Cash Card */}
-                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid #10b981', position: 'relative' }}>
-                            <button onClick={() => handleRemoveAlert('cash')} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} title="Remove Alert" onMouseOver={(e) => e.currentTarget.style.color = 'var(--error)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={20} /></button>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}><Wallet size={18} /> Cash Limit</div>
-                            <div style={{ fontSize: '2.2rem', fontWeight: 700 }}>{activeThresholds.cash ? `₹ ${parseFloat(activeThresholds.cash).toLocaleString()}` : <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 400 }}>Not Set</span>}</div>
-                        </div>
-                        {/* Bank Card */}
-                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid #3b82f6', position: 'relative' }}>
-                            <button onClick={() => handleRemoveAlert('bank')} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} title="Remove Alert" onMouseOver={(e) => e.currentTarget.style.color = 'var(--error)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}><Trash2 size={20} /></button>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '1rem', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}><CreditCard size={18} /> Bank Transfer</div>
-                            <div style={{ fontSize: '2.2rem', fontWeight: 700 }}>{activeThresholds.bank ? `₹ ${parseFloat(activeThresholds.bank).toLocaleString()}` : <span style={{ fontSize: '1.2rem', color: 'var(--text-muted)', fontWeight: 400 }}>Not Set</span>}</div>
-                        </div>
-                    </div>
+                <div className="col-span-6">
+                    <AlertCard 
+                        category="monthly"
+                        title="Monthly Ceiling"
+                        icon={<Calendar size={20} />}
+                        color="var(--primary)"
+                        placeholder="50,000"
+                        info="Maximum overall budget permitted across all categories and methods within a single month."
+                        fetchedAlerts={fetchedAlerts}
+                        inputs={inputs}
+                        setInputs={setInputs}
+                        handleSaveAlert={handleSaveAlert}
+                        handleRemoveAlert={handleRemoveAlert}
+                    />
+                </div>
+                
+                <div className="col-span-6">
+                    <AlertCard 
+                        category="daily"
+                        title="Daily Trigger"
+                        icon={<Clock size={20} />}
+                        color="var(--secondary)"
+                        placeholder="2,000"
+                        info="Strict 24-hour limit on all transactions. Restricts impulse buying globally."
+                        fetchedAlerts={fetchedAlerts}
+                        inputs={inputs}
+                        setInputs={setInputs}
+                        handleSaveAlert={handleSaveAlert}
+                        handleRemoveAlert={handleRemoveAlert}
+                    />
+                </div>
+
+                <div className="col-span-12" style={{ marginTop: '2rem', marginBottom: '0.5rem' }}>
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 600 }}>Method Specific Caps</h2>
+                </div>
+
+                <div className="col-span-4 delay-100">
+                    <AlertCard 
+                        category="upi"
+                        title="UPI Allowance"
+                        icon={<Smartphone size={20} />}
+                        color="#a855f7"
+                        placeholder="10,000"
+                        info="Limit spending explicitly made through Digital Wallet and UPI gateways."
+                        fetchedAlerts={fetchedAlerts}
+                        inputs={inputs}
+                        setInputs={setInputs}
+                        handleSaveAlert={handleSaveAlert}
+                        handleRemoveAlert={handleRemoveAlert}
+                    />
+                </div>
+                
+                <div className="col-span-4 delay-200">
+                    <AlertCard 
+                        category="cash"
+                        title="Cash Maximum"
+                        icon={<Wallet size={20} />}
+                        color="#10b981"
+                        placeholder="5,000"
+                        info="Hard cap on physical currency expenditures to increase digital tracking."
+                        fetchedAlerts={fetchedAlerts}
+                        inputs={inputs}
+                        setInputs={setInputs}
+                        handleSaveAlert={handleSaveAlert}
+                        handleRemoveAlert={handleRemoveAlert}
+                    />
+                </div>
+
+                <div className="col-span-4 delay-300">
+                    <AlertCard 
+                        category="bank"
+                        title="Bank Transfer"
+                        icon={<CreditCard size={20} />}
+                        color="#3b82f6"
+                        placeholder="30,000"
+                        info="Limit high-transaction volume sent via RTGS, NEFT, or Direct Card."
+                        fetchedAlerts={fetchedAlerts}
+                        inputs={inputs}
+                        setInputs={setInputs}
+                        handleSaveAlert={handleSaveAlert}
+                        handleRemoveAlert={handleRemoveAlert}
+                    />
                 </div>
 
             </div>
         </div>
     );
+};
+
+// Extracted AlertCard to prevent re-mounting focus drops
+const AlertCard = ({ category, title, icon, color, placeholder, info, fetchedAlerts, inputs, setInputs, handleSaveAlert, handleRemoveAlert }) => {
+    const isSet = fetchedAlerts[category] !== null;
+    const hasChanged = inputs[category] !== fetchedAlerts[category];
+    
+    return (
+        <div className={`glass-panel animate-slide-up ${isSet ? 'border-glow' : ''}`} style={{ padding: '2rem', borderTop: `4px solid ${color}`, position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', borderColor: isSet ? color : 'var(--border)' }}>
+            {isSet && (
+                <button onClick={() => handleRemoveAlert(category)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'var(--card-bg)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', transition: 'all 0.2s', zIndex: 10 }} title="Remove Alert" onMouseOver={(e) => { e.currentTarget.style.color = 'var(--error)'; e.currentTarget.style.borderColor = 'var(--error)'; }} onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}>
+                    <Trash2 size={16} />
+                </button>
+            )}
+            
+            <div style={{ color: isSet ? color : 'var(--text-muted)', fontSize: '1.1rem', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.8rem', fontWeight: 600 }}>
+                {icon} {title}
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: isSet ? '0.5rem' : '1.5rem', minHeight: '40px' }}>{info}</p>
+
+            {isSet && (
+                <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.5rem 0.8rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                    <ShieldCheck size={16} color="var(--success)" /> 
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>Active DB Limit: <strong>₹{parseFloat(fetchedAlerts[category]).toLocaleString()}</strong></span>
+                </div>
+            )}
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500 }}>Alert Threshold (₹)</label>
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-main)', borderRadius: '10px', border: hasChanged ? `2px solid ${color}` : '1px solid var(--border)', padding: '0 1rem', transition: 'all 0.3s', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '1.1rem', fontWeight: 600, marginRight: '0.5rem' }}>₹</span>
+                    <input
+                        type="number"
+                        placeholder={placeholder}
+                        value={inputs[category]}
+                        onChange={(e) => setInputs(prev => ({ ...prev, [category]: e.target.value }))}
+                        style={{ flex: 1, padding: '0.9rem 0', background: 'transparent', border: 'none', color: 'var(--text-main)', fontSize: '1.1rem', outline: 'none' }}
+                        min="0"
+                    />
+                </div>
+            </div>
+            
+            <button 
+                onClick={() => handleSaveAlert(category)}
+                className="btn-primary" 
+                style={{ 
+                    width: '100%', 
+                    background: hasChanged ? color : (isSet ? 'rgba(255,255,255,0.05)' : color), 
+                    color: hasChanged ? '#fff' : (isSet ? 'var(--text-muted)' : '#fff'),
+                    border: isSet && !hasChanged ? '1px solid var(--border)' : 'none',
+                    opacity: (!inputs[category] && !isSet) ? 0.3 : 1, 
+                    pointerEvents: hasChanged ? 'auto' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.3s'
+                }}
+            >
+                {isSet ? (hasChanged ? 'Update Threshold' : 'Saved & Active') : 'Initialize Limit'}
+            </button>
+        </div>
+    )
 };
 
 export default Alerts;

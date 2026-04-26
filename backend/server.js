@@ -3,7 +3,10 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
-import User from './models/User.js';
+import transactionRoutes from './routes/transactions.js';
+import alertRoutes from './routes/alerts.js';
+import goalRoutes from './routes/goals.js';
+import connectDB from './config/db.js';
 
 dotenv.config();
 
@@ -13,25 +16,19 @@ const MONGO_URI = process.env.MONGO_URI;
 
 
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
 
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('Successfully connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+connectDB();
 
-app.post('/users', async (req, res) => { 
- try { 
- const user = new User(req.body); 
- const result = await user.save(); 
- res.status(201).json(result); 
- } catch (err) { 
- res.status(400).json({ error: err.message }); 
- } 
-});
+
 
 
 app.use('/api/auth', authRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/goals', goalRoutes);
 
 
 app.get('/', (req, res) => {
@@ -40,5 +37,5 @@ app.get('/', (req, res) => {
 
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

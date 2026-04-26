@@ -1,16 +1,18 @@
 import { User, Mail, Phone, MapPin, Calendar, Clock, Shield } from 'lucide-react';
 
 const UserDetails = () => {
-    // Mock user details
+    // Dynamically retrieve user details from local storage
+    const storedUser = JSON.parse(localStorage.getItem('user')) || {};
+    
     const user = {
-        name: 'Piyush',
-        email: 'piyush@example.com',
-        phone: '+91 98765 43210',
-        location: 'Mumbai, India',
-        memberSince: 'January 2026',
-        lastLogin: 'March 09, 2026, 19:20 IST',
+        name: storedUser.name || 'Anonymous User',
+        email: storedUser.email || 'Not Provided',
+        phone: '+91 (Add Phone)',
+        location: 'Account Location',
+        memberSince: new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+        lastLogin: new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
         accountStatus: 'Active',
-        plan: 'Premium'
+        plan: 'Basic'
     };
 
     return (

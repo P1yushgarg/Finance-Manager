@@ -1,22 +1,30 @@
-import { useState } from 'react';
-import { Search, Filter, ArrowDownRight, IndianRupee, CreditCard, Banknote, Smartphone } from 'lucide-react';
-
-const mockTransactions = [
-    { id: 'TXN-001', recipient: 'Amazon India', category: 'Shopping', method: 'UPI', date: '06/03/2026', amount: 3200, status: 'Completed' },
-    { id: 'TXN-002', recipient: 'Reliance Smart', category: 'Groceries', method: 'Card', date: '04/03/2026', amount: 4500, status: 'Completed' },
-    { id: 'TXN-003', recipient: 'Netflix', category: 'Entertainment', method: 'Bank', date: '01/03/2026', amount: 649, status: 'Completed' },
-    { id: 'TXN-004', recipient: 'Local Vendor', category: 'Food & Dining', method: 'Cash', date: '28/02/2026', amount: 350, status: 'Completed' },
-    { id: 'TXN-005', recipient: 'Jio Broadband', category: 'Utilities', method: 'UPI', date: '25/02/2026', amount: 899, status: 'Completed' },
-    { id: 'TXN-006', recipient: 'Uber Rides', category: 'Transport', method: 'UPI', date: '24/02/2026', amount: 450, status: 'Completed' },
-    { id: 'TXN-007', recipient: 'House Rent', category: 'Housing', method: 'Bank', date: '01/02/2026', amount: 25000, status: 'Completed' },
-    { id: 'TXN-008', recipient: 'Zomato', category: 'Food & Dining', method: 'UPI', date: '30/01/2026', amount: 650, status: 'Completed' },
-];
+import { useState, useEffect } from 'react';
+import { Search, Filter, IndianRupee, CreditCard, Banknote, Smartphone } from 'lucide-react';
 
 const Transactions = () => {
+    const [transactions, setTransactions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterMethod, setFilterMethod] = useState('All');
 
-    const filteredTransactions = mockTransactions.filter(tx => {
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const userObj = JSON.parse(localStorage.getItem('user'));
+                if (userObj && userObj.id) {
+                    const response = await fetch(`/api/transactions?userId=${userObj.id}`);
+                    const data = await response.json();
+                    if (response.ok) {
+                        setTransactions(data);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch transactions", err);
+            }
+        };
+        fetchTransactions();
+    }, []);
+
+    const filteredTransactions = transactions.filter(tx => {
         const matchesSearch = tx.recipient.toLowerCase().includes(searchTerm.toLowerCase()) || tx.category.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesMethod = filterMethod === 'All' || tx.method === filterMethod;
         return matchesSearch && matchesMethod;
@@ -83,8 +91,8 @@ const Transactions = () => {
                     </thead>
                     <tbody>
                         {filteredTransactions.length > 0 ? filteredTransactions.map((tx, idx) => (
-                            <tr key={tx.id} style={{ borderBottom: idx === filteredTransactions.length - 1 ? 'none' : '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
-                                <td style={{ padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>{tx.id}</td>
+                            <tr key={tx._id} style={{ borderBottom: idx === filteredTransactions.length - 1 ? 'none' : '1px solid var(--border)', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                <td style={{ padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>{tx._id.substring(tx._id.length - 6).toUpperCase()}</td>
                                 <td style={{ padding: '1.5rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                         <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
@@ -96,7 +104,7 @@ const Transactions = () => {
                                         </div>
                                     </div>
                                 </td>
-                                <td style={{ padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>{tx.date}</td>
+                                <td style={{ padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>{new Date(tx.date).toLocaleDateString()}</td>
                                 <td style={{ padding: '1.5rem' }}>
                                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', borderRadius: '20px', background: 'rgba(0,0,0,0.05)', fontSize: '0.85rem', fontWeight: 500 }}>
                                         {getMethodIcon(tx.method)}

@@ -3,22 +3,24 @@ import { PlusCircle, CreditCard, Banknote } from 'lucide-react';
 
 const AddTransactionForm = ({ onAdd }) => {
     const [amount, setAmount] = useState('');
+    const [recipient, setRecipient] = useState('');
     const [category, setCategory] = useState('Groceries');
     const [method, setMethod] = useState('UPI');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!amount) return;
+        if (!amount || !recipient) return;
 
         onAdd({
-            id: Date.now(),
             amount: parseFloat(amount),
+            recipient,
             category,
             method,
             date: new Date().toLocaleDateString()
         });
 
         setAmount('');
+        setRecipient('');
     };
 
     return (
@@ -38,6 +40,18 @@ const AddTransactionForm = ({ onAdd }) => {
                         onChange={(e) => setAmount(e.target.value)}
                         required
                         min="1"
+                    />
+                </div>
+
+                <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Paid To</label>
+                    <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. Starbucks, Amazon..."
+                        value={recipient}
+                        onChange={(e) => setRecipient(e.target.value)}
+                        required
                     />
                 </div>
 
