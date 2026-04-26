@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
   try {
     const { user, title, targetAmount, currentAmount, deadline, color } = req.body;
 
-    if (!user || !title || !targetAmount || !deadline) {
+    if (!user || !title || targetAmount === undefined || targetAmount === null || !deadline) {
       return res.status(400).json({ error: 'Please provide all required fields' });
     }
 

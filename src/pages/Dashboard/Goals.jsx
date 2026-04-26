@@ -45,32 +45,41 @@ const Goals = () => {
 
     const handleAddSubmit = async (e) => {
         e.preventDefault();
+
+        const userObj = JSON.parse(localStorage.getItem('user'));
+        if (!userObj || !userObj.id) {
+            alert('You must be logged in to create a goal.');
+            return;
+        }
+
+        const payload = {
+            user: String(userObj.id),
+            title: addForm.title,
+            targetAmount: Number(addForm.targetAmount),
+            currentAmount: Number(addForm.currentAmount) || 0,
+            deadline: addForm.deadline,
+            color: addForm.color,
+        };
+
         try {
-            const userObj = JSON.parse(localStorage.getItem('user'));
-            if (!userObj || !userObj.id) return;
-
-            const payload = {
-                user: userObj.id,
-                title: addForm.title,
-                targetAmount: Number(addForm.targetAmount),
-                currentAmount: Number(addForm.currentAmount),
-                deadline: addForm.deadline,
-                color: addForm.color,
-            };
-
             const response = await fetch('/api/goals', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                const savedGoal = await response.json();
-                setGoals([savedGoal, ...goals]);
+                setGoals([data, ...goals]);
                 setIsAdding(false);
                 setAddForm({ title: '', targetAmount: '', currentAmount: '', deadline: '', color: '#3b82f6' });
+            } else {
+                alert('Error creating goal: ' + (data.error || 'Unknown error'));
+                console.error('Goal creation failed:', data);
             }
         } catch (err) {
+            alert('Network error — check if the backend server is running.');
             console.error("Failed to save goal", err);
         }
     };
