@@ -8,7 +8,7 @@ const Navbar = () => {
 
     useEffect(() => {
         const checkUser = () => {
-            const storedData = localStorage.getItem('userData');
+            const storedData = localStorage.getItem('user');
             const isLoggedIn = sessionStorage.getItem('isLoggedIn');
             if (storedData && isLoggedIn === 'true') {
                 setUser(JSON.parse(storedData));

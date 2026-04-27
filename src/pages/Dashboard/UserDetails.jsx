@@ -1,4 +1,4 @@
-import { User, Mail, Phone, MapPin, Calendar, Clock, Shield } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Clock, Shield } from 'lucide-react';
 
 const UserDetails = () => {
     // Dynamically retrieve user details from local storage
@@ -27,8 +27,8 @@ const UserDetails = () => {
             <div className="dashboard-grid">
                 <div className="col-span-8 glass-panel animate-slide-up" style={{ padding: '2.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem' }}>
-                        <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                            <User size={48} />
+                        <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.5rem', fontWeight: 700, boxShadow: '0 8px 24px rgba(139, 92, 246, 0.35)', flexShrink: 0 }}>
+                            {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
                             <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>{user.name}</h2>

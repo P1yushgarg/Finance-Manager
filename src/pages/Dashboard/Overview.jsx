@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, IndianRupee, Edit2, Check, Trash2, X } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, IndianRupee, Edit2, Check, Trash2, X, AlertCircle } from 'lucide-react';
 import AddTransactionForm from '../../components/forms/AddTransactionForm';
 import CategoryChart from '../../components/charts/CategoryChart';
 import DailySpendChart from '../../components/charts/DailySpendChart';
@@ -8,9 +8,19 @@ const Overview = () => {
     const [transactions, setTransactions] = useState([]);
     const [alerts, setAlerts] = useState({});
 
-    const [balance, setBalance] = useState(142000);
-    const [isEditingBalance, setIsEditingBalance] = useState(false);
-    const [tempBalance, setTempBalance] = useState('');
+    // Load income from localStorage per user (defaults to 0 for new users)
+    const getUserIncomeKey = () => {
+        const userObj = JSON.parse(localStorage.getItem('user'));
+        return userObj ? `income_${userObj.id}` : 'income_guest';
+    };
+    const [income, setIncome] = useState(() => {
+        const userObj = JSON.parse(localStorage.getItem('user'));
+        if (!userObj) return 0;
+        const saved = localStorage.getItem(`income_${userObj.id}`);
+        return saved !== null ? parseFloat(saved) : 0;
+    });
+    const [isEditingIncome, setIsEditingIncome] = useState(false);
+    const [tempIncome, setTempIncome] = useState('');
 
     const [editingTxId, setEditingTxId] = useState(null);
     const [editTxData, setEditTxData] = useState({});
@@ -68,7 +78,7 @@ const Overview = () => {
             if (response.ok) {
                 const newAllTx = [data, ...transactions];
                 setTransactions(newAllTx);
-                setBalance(prev => prev - data.amount);
+                // income itself doesn't change when a transaction is added
 
                 const methodKey = data.method.toLowerCase();
                 const newTotalSpent = newAllTx.reduce((a, b) => a + b.amount, 0);
@@ -83,7 +93,7 @@ const Overview = () => {
                 if (alerts.daily !== undefined && dailyTotal > Number(alerts.daily)) {
                     messages.push(`Daily Overspend: Today's total is ₹${dailyTotal} (Limit: ₹${alerts.daily})`);
                 }
-                if (alerts[methodKey] !== undefined && ['upi', 'cash', 'bank', 'card'].includes(methodKey)) {
+                if (alerts[methodKey] !== undefined && ['upi', 'cash', 'bank'].includes(methodKey)) {
                     if (currentMethodTotal > Number(alerts[methodKey])) {
                         messages.push(`${data.method} Overspend: Total is ₹${currentMethodTotal} (Limit: ₹${alerts[methodKey]})`);
                     }
@@ -103,7 +113,7 @@ const Overview = () => {
             const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 setTransactions(prev => prev.filter(tx => tx._id !== id));
-                setBalance(prev => prev + amount); // Restoring balance from deleted transaction
+                // income is unchanged when a transaction is deleted
             } else {
                 window.alert("Failed to delete transaction securely.");
             }
@@ -122,7 +132,6 @@ const Overview = () => {
             const updatedTx = await res.json();
             if (res.ok) {
                 const oldTx = transactions.find(t => t._id === id);
-                setBalance(prev => prev + oldTx.amount - updatedTx.amount); // Adjust balance diff
                 setTransactions(prev => prev.map(tx => tx._id === id ? updatedTx : tx));
                 setEditingTxId(null);
             }
@@ -131,12 +140,18 @@ const Overview = () => {
         }
     };
 
-    const saveBalance = () => {
-        if (tempBalance && !isNaN(tempBalance)) setBalance(parseFloat(tempBalance));
-        setIsEditingBalance(false);
+    const saveIncome = () => {
+        const val = parseFloat(tempIncome);
+        if (!isNaN(val) && val >= 0) {
+            setIncome(val);
+            localStorage.setItem(getUserIncomeKey(), val);
+        }
+        setIsEditingIncome(false);
     };
 
     const totalSpent = transactions.reduce((acc, curr) => acc + curr.amount, 0);
+    const netBalance = income - totalSpent;
+    const isOverspent = netBalance < 0;
 
     return (
         <div className="animate-fade-in">
@@ -147,26 +162,48 @@ const Overview = () => {
                 </div>
             </header>
 
+            {/* Income = 0 banner: prompt user to set income */}
+            {income === 0 && (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: '1rem',
+                    padding: '1rem 1.5rem', marginBottom: '2rem',
+                    borderRadius: '12px',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)'
+                }}>
+                    <AlertCircle size={22} color="var(--primary)" style={{ flexShrink: 0 }} />
+                    <p style={{ color: 'var(--text-main)', fontWeight: 500 }}>
+                        Your income is not set yet. Click the <strong>✏️ edit</strong> button on the <strong>Total Income</strong> card to add your income.
+                    </p>
+                </div>
+            )}
+
             {/* TOP ROW: Large Stat Cards */}
             <div className="dashboard-grid animate-slide-up" style={{ marginBottom: '3rem' }}>
-                <div className="col-span-6">
+                <div className="col-span-4">
                     <EditableStatCard
-                        title="Total Balance"
-                        amount={balance}
+                        title="Total Income"
+                        amount={income}
                         icon={<IndianRupee size={32} color="var(--primary)" />}
-                        isEditing={isEditingBalance}
-                        setIsEditing={setIsEditingBalance}
-                        tempValue={tempBalance}
-                        setTempValue={setTempBalance}
-                        saveFunc={saveBalance}
+                        isEditing={isEditingIncome}
+                        setIsEditing={setIsEditingIncome}
+                        tempValue={tempIncome}
+                        setTempValue={setTempIncome}
+                        saveFunc={saveIncome}
                     />
                 </div>
-                <div className="col-span-6">
+                <div className="col-span-4">
                     <StatCard
                         title="Total Spent"
                         amount={totalSpent}
                         icon={<ArrowUpRight size={32} color="var(--danger)" />}
                         isNegative
+                    />
+                </div>
+                <div className="col-span-4">
+                    <NetBalanceCard
+                        netBalance={netBalance}
+                        isOverspent={isOverspent}
                     />
                 </div>
             </div>
@@ -214,7 +251,7 @@ const Overview = () => {
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                     <select className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} value={editTxData.method} onChange={e => setEditTxData({...editTxData, method: e.target.value})}>
-                                                        {['UPI', 'Card', 'Cash', 'Bank'].map(m => <option key={m} value={m}>{m}</option>)}
+                                                        {['UPI', 'Cash', 'Bank'].map(m => <option key={m} value={m}>{m}</option>)}
                                                     </select>
                                                     <input type="number" className="input-field" style={{ flex: 1, minWidth: '100px', padding: '0.6rem' }} placeholder="Amount" value={editTxData.amount} onChange={e => setEditTxData({...editTxData, amount: Number(e.target.value)})} />
                                                 </div>
@@ -269,7 +306,24 @@ const StatCard = ({ title, amount, icon, isNegative }) => (
             {icon}
             <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>{title}</span>
         </div>
-        <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginTop: '0.5rem' }}>₹{amount.toLocaleString()}</h3>
+        <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginTop: '0.5rem', color: isNegative ? 'var(--danger)' : 'var(--text-main)' }}>-₹{amount.toLocaleString()}</h3>
+    </div>
+);
+
+const NetBalanceCard = ({ netBalance, isOverspent }) => (
+    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', height: '100%', border: isOverspent ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(16,185,129,0.25)', transition: 'border 0.3s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isOverspent ? 'var(--danger)' : 'var(--success)' }}>
+            {isOverspent
+                ? <ArrowDownRight size={32} color="var(--danger)" />
+                : <ArrowUpRight size={32} color="var(--success)" />}
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>Net Balance</span>
+        </div>
+        <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginTop: '0.5rem', color: isOverspent ? 'var(--danger)' : 'var(--success)' }}>
+            {isOverspent ? `-₹${Math.abs(netBalance).toLocaleString()}` : `₹${netBalance.toLocaleString()}`}
+        </h3>
+        {isOverspent && (
+            <span style={{ fontSize: '0.78rem', color: 'var(--danger)', marginTop: '0.2rem', fontWeight: 500 }}>⚠️ Expenses exceed income</span>
+        )}
     </div>
 );
 

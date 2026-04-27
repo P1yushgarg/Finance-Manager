@@ -64,7 +64,7 @@ const Transactions = () => {
 
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'rgba(0,0,0,0.03)', padding: '0.5rem', borderRadius: '12px' }}>
                     <Filter size={18} color="var(--text-muted)" style={{ margin: '0 0.5rem' }} />
-                    {['All', 'UPI', 'Bank', 'Cash', 'Card'].map(method => (
+                    {['All', 'UPI', 'Cash', 'Bank'].map(method => (
                         <button
                             key={method}
                             className={`btn-icon-soft ${filterMethod === method ? 'btn-primary' : ''}`}

@@ -73,23 +73,22 @@ const AddTransactionForm = ({ onAdd }) => {
 
                 <div>
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>Payment Method</label>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <button
-                            type="button"
-                            className={`flex-center ${method === 'UPI' ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ flex: 1, gap: '0.5rem', padding: '0.5rem' }}
-                            onClick={() => setMethod('UPI')}
-                        >
-                            <Banknote size={16} /> UPI
-                        </button>
-                        <button
-                            type="button"
-                            className={`flex-center ${method === 'Card' ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ flex: 1, gap: '0.5rem', padding: '0.5rem' }}
-                            onClick={() => setMethod('Card')}
-                        >
-                            <CreditCard size={16} /> Card
-                        </button>
+                    <div style={{ display: 'flex', gap: '0.6rem' }}>
+                        {[
+                            { label: 'UPI',  icon: <Banknote  size={15} /> },
+                            { label: 'Cash', icon: <Banknote  size={15} /> },
+                            { label: 'Bank', icon: <CreditCard size={15} /> },
+                        ].map(({ label, icon }) => (
+                            <button
+                                key={label}
+                                type="button"
+                                className={`flex-center ${method === label ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{ flex: 1, gap: '0.4rem', padding: '0.5rem' }}
+                                onClick={() => setMethod(label)}
+                            >
+                                {icon} {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
