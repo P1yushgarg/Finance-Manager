@@ -1,56 +1,123 @@
-# Personal Finance Manager
+# FinX Manager - Personal Finance Dashboard
 
-A premium, high-fidelity personal finance dashboard built with modern web technologies. This application allows users to track their expenses, visualize financial data, set goals, and manage their money effectively within a beautiful, dynamic, glass-morphic interface.
+A full-stack personal finance dashboard that lets users track expenses, visualize spending patterns, set financial goals, and configure spending alerts. Built with React 19 on the frontend and Node.js/Express with MongoDB on the backend.
 
-## 🌟 Features
+## Features
 
-- **Interactive Dashboard**: A comprehensive overview of total balance, income, and spending.
-- **Advanced Visualizations**: Detailed line, bar, and doughnut charts for spending trends and category analysis.
-- **Transaction Tracking**: Log daily expenses, view recent transactions, and categorize spending dynamically.
-- **Goal Management**: Interactive modules to add, edit, and track personal financial goals.
-- **Premium Aesthetics**: Glass-morphism design, smooth micro-animations, and responsive layouts built entirely with pure CSS.
-- **Light & Dark Themes**: Fully supported theme switching with carefully curated color palettes.
-- **Authentication Flow**: Mock login/logout state management with session handling.
+- **Dashboard Overview** - View total income, total spent, and net balance at a glance with recent transactions.
+- **Transaction Management** - Add, edit, and delete transactions with categories (Groceries, Dining, Entertainment, Shopping, Utilities) and payment methods (UPI, Cash, Bank Transfer).
+- **Spending Visualizations** - Daily spending trends (area chart) and category-wise expense allocation (pie chart) powered by Recharts.
+- **Financial Goals** - Create goals with target amounts and deadlines, track progress with visual progress bars.
+- **Spending Alerts** - Set threshold limits for monthly spending, daily spending, and per payment method. Get notified when limits are exceeded.
+- **Authentication** - User registration and login with JWT tokens and bcrypt password hashing.
+- **Glass-morphism UI** - Clean, modern interface built with vanilla CSS and custom CSS variables.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
-- **Routing**: [React Router v7](https://reactrouter.com/)
-- **Data Visualization**: [Recharts](https://recharts.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Styling**: Vanilla CSS (`index.css`) with custom CSS variables for maximum flexibility and performance.
+### Frontend
+- **React 19** with Vite 7
+- **React Router v7** for client-side routing
+- **Recharts** for data visualization
+- **Lucide React** for icons
+- **Vanilla CSS** with CSS variables
 
-## 🚀 Getting Started
+### Backend
+- **Node.js** with Express 5
+- **MongoDB** with Mongoose 9
+- **JWT** for authentication
+- **bcryptjs** for password hashing
+
+## Getting Started
 
 ### Prerequisites
 
-Ensure you have [Node.js](https://nodejs.org/) installed on your machine.
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [MongoDB](https://www.mongodb.com/) (local instance or Atlas)
 
 ### Installation
 
-1. Clone the repository or navigate to the project directory:
+1. Clone the repository:
    ```bash
-   cd "Finance Manager"
+   git clone <repository-url>
+   cd Finance-Manager
    ```
 
-2. Install dependencies:
+2. Install frontend dependencies:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+3. Install backend dependencies:
+   ```bash
+   cd backend
+   npm install
+   ```
+
+4. Create a `.env` file inside the `backend/` directory:
+   ```env
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret_key
+   PORT=5000
+   ```
+
+5. Start the backend server:
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+6. In a separate terminal, start the frontend:
    ```bash
    npm run dev
    ```
 
-4. Open your browser and visit `http://localhost:5173` (or the port specified by Vite in the terminal).
+7. Open `http://localhost:5173` in your browser.
 
-## 📂 Project Structure
+## Project Structure
 
-- `/src/components`: Reusable UI elements, forms, layouts, and Recharts components.
-- `/src/pages`: Distinct application views (Dashboard Overview, Transactions, Goals, Settings, About Us, etc.).
-- `/src/index.css`: The core design system detailing CSS tokens, variables, utility classes, and glass-morphism effects.
+```
+Finance-Manager/
+├── src/                        # Frontend (React)
+│   ├── components/
+│   │   ├── charts/             # Recharts visualizations
+│   │   ├── forms/              # Transaction form
+│   │   └── layout/             # Navbar, Sidebar, Footer
+│   ├── pages/
+│   │   ├── Auth/               # Login, Signup
+│   │   └── Dashboard/          # Overview, Transactions, Goals, Alerts, UserDetails
+│   ├── App.jsx                 # Route configuration
+│   ├── main.jsx                # Entry point
+│   └── index.css               # Global styles and design tokens
+├── backend/
+│   ├── config/
+│   │   └── db.js               # MongoDB connection
+│   ├── models/                 # Mongoose schemas (User, Transaction, Goal, Alert)
+│   ├── routes/                 # Express routes (auth, transactions, goals, alerts)
+│   └── server.js               # Express server entry point
+├── package.json                # Frontend dependencies
+└── vite.config.js              # Vite config with API proxy
+```
 
-## 🎨 Design System
+## API Endpoints
 
-This project strictly adheres to modern web design standards without relying on utility-first frameworks like Tailwind. It leverages vanilla CSS variables to maintain a consistent, rich aesthetic across light and dark modes, featuring smooth gradients and hover effects.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Login and receive JWT token |
+| GET | `/api/transactions?userId=` | Get all transactions for a user |
+| POST | `/api/transactions` | Create a transaction |
+| PUT | `/api/transactions/:id` | Update a transaction |
+| DELETE | `/api/transactions/:id` | Delete a transaction |
+| GET | `/api/goals?userId=` | Get all goals for a user |
+| POST | `/api/goals` | Create a goal |
+| PUT | `/api/goals/:id` | Update a goal |
+| DELETE | `/api/goals/:id` | Delete a goal |
+| GET | `/api/alerts?userId=` | Get all alerts for a user |
+| POST | `/api/alerts` | Create or update an alert |
+| DELETE | `/api/alerts` | Delete an alert |
+
+## Team
+
+- Piyush Garg
+- Mayank Rana
+- Muskan Garg
