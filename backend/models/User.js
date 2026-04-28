@@ -16,19 +16,23 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  totalIncome: {
-    type: Number,
-    default: 0,
+  phone: {
+    type: String,
+    default: '',
   },
-  totalBalance: {
+  location: {
+    type: String,
+    default: '',
+  },
+  totalIncome: {
     type: Number,
     default: 0,
   },
 }, { timestamps: true });
 
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);

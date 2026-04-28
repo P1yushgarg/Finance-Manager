@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -37,7 +38,10 @@ router.post('/register', async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        location: user.location,
+        totalIncome: user.totalIncome
       }
     });
   } catch (error) {
@@ -71,7 +75,66 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        location: user.location,
+        totalIncome: user.totalIncome
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET user details by ID
+router.get('/user/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.status(200).json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      location: user.location,
+      totalIncome: user.totalIncome
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT update user details
+router.put('/user/:id', async (req, res) => {
+  try {
+    const { name, phone, location, totalIncome } = req.body;
+    const userId = new mongoose.Types.ObjectId(req.params.id);
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (location !== undefined) user.location = location;
+    if (totalIncome !== undefined) user.totalIncome = totalIncome;
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'User details updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        location: user.location,
+        totalIncome: user.totalIncome
       }
     });
   } catch (error) {

@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Goal from '../models/Goal.js';
 
 const router = express.Router();
@@ -9,7 +10,7 @@ router.get('/', async (req, res) => {
     if (!req.query.userId) {
       return res.status(400).json({ error: 'userId query parameter is required' });
     }
-    const goals = await Goal.find({ user: req.query.userId }).sort({ createdAt: -1 });
+    const goals = await Goal.find({ user: new mongoose.Types.ObjectId(req.query.userId) }).sort({ createdAt: -1 });
     res.status(200).json(goals);
   } catch (error) {
     console.error(error);

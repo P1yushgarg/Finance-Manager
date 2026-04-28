@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Alert from '../models/Alert.js';
 
 const router = express.Router();
@@ -8,7 +9,7 @@ router.get('/', async (req, res) => {
   try {
     const filter = {};
     if (req.query.userId) {
-      filter.user = req.query.userId;
+      filter.user = new mongoose.Types.ObjectId(req.query.userId);
     }
     const alerts = await Alert.find(filter).sort({ createdAt: -1 });
     res.status(200).json(alerts);
