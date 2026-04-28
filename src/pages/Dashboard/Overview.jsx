@@ -8,17 +8,8 @@ const Overview = () => {
     const [transactions, setTransactions] = useState([]);
     const [alerts, setAlerts] = useState({});
 
-    // Load income from localStorage per user (defaults to 0 for new users)
-    const getUserIncomeKey = () => {
-        const userObj = JSON.parse(localStorage.getItem('user'));
-        return userObj ? `income_${userObj.id}` : 'income_guest';
-    };
-    const [income, setIncome] = useState(() => {
-        const userObj = JSON.parse(localStorage.getItem('user'));
-        if (!userObj) return 0;
-        const saved = localStorage.getItem(`income_${userObj.id}`);
-        return saved !== null ? parseFloat(saved) : 0;
-    });
+    // Load income from MongoDB per user (defaults to 0 for new users)
+    const [income, setIncome] = useState(0);
     const [isEditingIncome, setIsEditingIncome] = useState(false);
     const [tempIncome, setTempIncome] = useState('');
 
@@ -30,9 +21,15 @@ const Overview = () => {
             try {
                 const userObj = JSON.parse(localStorage.getItem('user'));
                 if (userObj && userObj.id) {
-                    const [txRes, alertsRes] = await Promise.all([
+                    // Set income from localStorage first (from login response)
+                    if (userObj.totalIncome !== undefined) {
+                        setIncome(userObj.totalIncome);
+                    }
+
+                    const [txRes, alertsRes, userRes] = await Promise.all([
                         fetch(`/api/transactions?userId=${userObj.id}`),
-                        fetch(`/api/alerts?userId=${userObj.id}`)
+                        fetch(`/api/alerts?userId=${userObj.id}`),
+                        fetch(`/api/auth/user/${userObj.id}`)
                     ]);
 
                     if (txRes.ok) {
@@ -46,6 +43,15 @@ const Overview = () => {
                             activeAlerts[alert.category] = alert.thresholdAmount;
                         });
                         setAlerts(activeAlerts);
+                    }
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        setIncome(userData.totalIncome || 0);
+                        // Update localStorage with latest data
+                        localStorage.setItem('user', JSON.stringify({
+                            ...userObj,
+                            totalIncome: userData.totalIncome || 0
+                        }));
                     }
                 }
             } catch (err) {
@@ -140,11 +146,27 @@ const Overview = () => {
         }
     };
 
-    const saveIncome = () => {
+    const saveIncome = async () => {
         const val = parseFloat(tempIncome);
         if (!isNaN(val) && val >= 0) {
-            setIncome(val);
-            localStorage.setItem(getUserIncomeKey(), val);
+            try {
+                const userObj = JSON.parse(localStorage.getItem('user'));
+                if (!userObj || !userObj.id) return;
+
+                const response = await fetch(`/api/auth/user/${userObj.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ totalIncome: val })
+                });
+
+                if (response.ok) {
+                    setIncome(val);
+                } else {
+                    console.error('Failed to save income to database');
+                }
+            } catch (err) {
+                console.error('Failed to save income', err);
+            }
         }
         setIsEditingIncome(false);
     };

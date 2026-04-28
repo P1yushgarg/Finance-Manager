@@ -40,7 +40,8 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        totalIncome: user.totalIncome
       }
     });
   } catch (error) {
@@ -76,7 +77,8 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        totalIncome: user.totalIncome
       }
     });
   } catch (error) {
@@ -97,7 +99,8 @@ router.get('/user/:id', async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      location: user.location
+      location: user.location,
+      totalIncome: user.totalIncome
     });
   } catch (error) {
     console.error(error);
@@ -108,7 +111,7 @@ router.get('/user/:id', async (req, res) => {
 // PUT update user details
 router.put('/user/:id', async (req, res) => {
   try {
-    const { name, phone, location } = req.body;
+    const { name, phone, location, totalIncome } = req.body;
     const userId = new mongoose.Types.ObjectId(req.params.id);
 
     const user = await User.findById(userId);
@@ -119,6 +122,7 @@ router.put('/user/:id', async (req, res) => {
     if (name !== undefined) user.name = name;
     if (phone !== undefined) user.phone = phone;
     if (location !== undefined) user.location = location;
+    if (totalIncome !== undefined) user.totalIncome = totalIncome;
 
     await user.save();
 
@@ -129,7 +133,8 @@ router.put('/user/:id', async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        totalIncome: user.totalIncome
       }
     });
   } catch (error) {
