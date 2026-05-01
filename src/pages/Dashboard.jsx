@@ -6,7 +6,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const storedData = localStorage.getItem('userData');
+        const storedData = localStorage.getItem('user');
         const isLoggedIn = sessionStorage.getItem('isLoggedIn');
         if (!storedData || isLoggedIn !== 'true') {
             navigate('/login');
