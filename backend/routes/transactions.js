@@ -8,9 +8,10 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const filter = {};
-    if (req.query.userId) {
-      filter.user = new mongoose.Types.ObjectId(req.query.userId);
+    if (!req.query.userId || req.query.userId === 'undefined') {
+      return res.status(200).json([]);
     }
+    filter.user = new mongoose.Types.ObjectId(req.query.userId);
     const transactions = await Transaction.find(filter).sort({ date: -1 });
     res.status(200).json(transactions);
   } catch (error) {
@@ -51,8 +52,8 @@ router.put('/:id', async (req, res) => {
   try {
     const { recipient, amount, category, method, status, date } = req.body;
     const updatedTx = await Transaction.findByIdAndUpdate(
-      req.params.id, 
-      { recipient, amount, category, method, status, date }, 
+      req.params.id,
+      { recipient, amount, category, method, status, date },
       { new: true }
     );
     if (!updatedTx) return res.status(404).json({ error: 'Transaction not found' });

@@ -1,43 +1,37 @@
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, PieChart, ArrowLeftRight, Target, Settings, HelpCircle, LogOut, Bell, User } from 'lucide-react';
 
+const NavItem = ({ icon, label, path, isActive }) => (
+    <Link
+        to={path}
+        style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.8rem',
+            padding: '0.8rem 1rem',
+            borderRadius: '8px',
+            color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
+            background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+            borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
+            transition: 'all 0.2s',
+            marginBottom: '0.2rem',
+            fontWeight: isActive ? 600 : 500
+        }}
+        onMouseOver={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(0,0,0,0.05)' } }}
+        onMouseOut={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' } }}
+    >
+        <div style={{ color: isActive ? 'var(--primary)' : 'inherit' }}>
+            {icon}
+        </div>
+        <span>{label}</span>
+    </Link>
+);
+
 const Sidebar = () => {
     const location = useLocation();
     const currentPath = location.pathname;
 
-    const NavItem = ({ icon, label, path, isActive }) => (
-        <Link
-            to={path}
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.8rem',
-                padding: '0.8rem 1rem',
-                borderRadius: '8px',
-                color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-                background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
-                transition: 'all 0.2s',
-                marginBottom: '0.2rem',
-                fontWeight: isActive ? 600 : 500
-            }}
-            onMouseOver={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(0,0,0,0.05)' } }}
-            onMouseOut={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' } }}
-        >
-            <div style={{ color: isActive ? 'var(--primary)' : 'inherit' }}>
-                {icon}
-            </div>
-            <span>{label}</span>
-        </Link>
-    );
-
-    const handleLogout = (e) => {
-        e.preventDefault();
-        sessionStorage.removeItem('isLoggedIn');
-        window.dispatchEvent(new Event('auth-change'));
-        // The Link will still navigate to '/' because we use the a tag or Link default behavior? Actually, preventDefault stops navigation.
-    };
-
+    // Removed unused handleLogout
     return (
         <aside className="glass-panel" style={{
             width: '260px',
@@ -71,7 +65,7 @@ const Sidebar = () => {
                     <NavItem icon={<HelpCircle size={20} />} label="Help Center" path="#" />
                     <Link
                         to="/"
-                        onClick={(e) => {
+                        onClick={() => {
                             sessionStorage.removeItem('isLoggedIn');
                             window.dispatchEvent(new Event('auth-change'));
                         }}

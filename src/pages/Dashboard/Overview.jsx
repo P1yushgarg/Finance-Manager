@@ -113,7 +113,7 @@ const Overview = () => {
         }
     };
 
-    const handleDeleteTx = async (id, amount) => {
+    const handleDeleteTx = async (id) => {
         if (!window.confirm("Are you sure you want to delete this transaction?")) return;
         try {
             const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
@@ -137,7 +137,6 @@ const Overview = () => {
             });
             const updatedTx = await res.json();
             if (res.ok) {
-                const oldTx = transactions.find(t => t._id === id);
                 setTransactions(prev => prev.map(tx => tx._id === id ? updatedTx : tx));
                 setEditingTxId(null);
             }
@@ -303,7 +302,7 @@ const Overview = () => {
                                                     <button onClick={() => { setEditingTxId(tx._id); setEditTxData(tx); }} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = 'var(--primary)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'} title="Edit Transaction">
                                                         <Edit2 size={16} />
                                                     </button>
-                                                    <button onClick={() => handleDeleteTx(tx._id, tx.amount)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = 'var(--error)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'} title="Delete Transaction">
+                                                    <button onClick={() => handleDeleteTx(tx._id)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = 'var(--error)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'} title="Delete Transaction">
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>

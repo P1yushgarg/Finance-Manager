@@ -8,10 +8,12 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSignup = async (e) => {
         e.preventDefault();
         if (name && email && password) {
+            setIsSubmitting(true);
             try {
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
@@ -29,8 +31,10 @@ const Signup = () => {
                 } else {
                     setError(data.error || 'Signup failed');
                 }
-            } catch (err) {
+            } catch {
                 setError('Network error. Please try again.');
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -98,8 +102,8 @@ const Signup = () => {
                         </div>
                     </div>
 
-                    <button type="submit" className="btn-primary flex-center" style={{ gap: '0.5rem', marginTop: '1rem' }}>
-                        Create Account <ArrowRight size={18} />
+                    <button type="submit" className="btn-primary flex-center" style={{ gap: '0.5rem', marginTop: '1rem', opacity: isSubmitting ? 0.7 : 1 }} disabled={isSubmitting}>
+                        {isSubmitting ? 'Creating Account...' : <><span style={{marginRight: '0.5rem'}}>Create Account</span> <ArrowRight size={18} /></>}
                     </button>
                 </form>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 
@@ -7,12 +7,14 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
 
         if (email && password) {
+            setIsSubmitting(true);
             try {
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
@@ -30,8 +32,10 @@ const Login = () => {
                 } else {
                     setError(data.error || 'Invalid email or password');
                 }
-            } catch (err) {
+            } catch {
                 setError('Network error. Please try again.');
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -83,8 +87,8 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <button type="submit" className="btn-primary flex-center" style={{ gap: '0.5rem', marginTop: '1rem' }}>
-                        Sign In <ArrowRight size={18} />
+                    <button type="submit" className="btn-primary flex-center" style={{ gap: '0.5rem', marginTop: '1rem', opacity: isSubmitting ? 0.7 : 1 }} disabled={isSubmitting}>
+                        {isSubmitting ? 'Signing In...' : <><span style={{marginRight: '0.5rem'}}>Sign In</span> <ArrowRight size={18} /></>}
                     </button>
                 </form>
 
