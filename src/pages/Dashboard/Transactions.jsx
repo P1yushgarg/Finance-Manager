@@ -68,7 +68,7 @@ const Transactions = () => {
                         <button
                             key={method}
                             className={`btn-icon-soft ${filterMethod === method ? 'btn-primary' : ''}`}
-                            style={filterMethod === method ? { background: 'var(--primary)', color: 'white' } : {}}
+                            style={{ width: 'auto', height: 'auto', padding: '0.4rem 1rem', borderRadius: '8px', ...(filterMethod === method ? { background: 'var(--primary)', color: 'white' } : {}) }}
                             onClick={() => setFilterMethod(method)}
                         >
                             {method}

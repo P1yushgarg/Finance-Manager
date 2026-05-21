@@ -277,11 +277,11 @@ const Overview = () => {
                                                     <input type="number" className="input-field" style={{ flex: 1, minWidth: '100px', padding: '0.6rem' }} placeholder="Amount" value={editTxData.amount} onChange={e => setEditTxData({...editTxData, amount: Number(e.target.value)})} />
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                                                    <button className="btn-icon-soft" style={{ padding: '0.5rem 1rem', borderRadius: '8px' }} onClick={() => setEditingTxId(null)}>
-                                                        <X size={16} style={{ marginRight: '0.3rem' }} /> Cancel
+                                                    <button className="btn-icon-soft" style={{ padding: '0.5rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', height: 'auto' }} onClick={() => setEditingTxId(null)}>
+                                                        <X size={16} /> Cancel
                                                     </button>
-                                                    <button className="btn-primary" style={{ padding: '0.5rem 1rem', borderRadius: '8px' }} onClick={() => handleSaveEditTx(tx._id)}>
-                                                        <Check size={16} style={{ marginRight: '0.3rem' }} /> Save
+                                                    <button className="btn-primary" style={{ padding: '0.5rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={() => handleSaveEditTx(tx._id)}>
+                                                        <Check size={16} /> Save
                                                     </button>
                                                 </div>
                                             </div>

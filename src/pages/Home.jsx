@@ -19,7 +19,7 @@ const Home = () => {
                         <Link to="/signup" className="btn-primary flex-center" style={{ gap: '0.5rem' }}>
                             Get Started <ArrowRight size={18} />
                         </Link>
-                        <Link to="/login" className="btn-secondary">
+                        <Link to="/dashboard" className="btn-secondary">
                             View Dashboard
                         </Link>
                     </div>

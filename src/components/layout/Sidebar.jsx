@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, PieChart, ArrowLeftRight, Target, Settings, HelpCircle, LogOut, Bell, User } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Target, LogOut, Bell, User } from 'lucide-react';
 
 const NavItem = ({ icon, label, path, isActive }) => (
     <Link
@@ -61,8 +61,6 @@ const Sidebar = () => {
                     <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', fontWeight: 600 }}>Preferences</h4>
                 </div>
                 <nav style={{ display: 'flex', flexDirection: 'column' }}>
-                    <NavItem icon={<Settings size={20} />} label="Settings" path="#" />
-                    <NavItem icon={<HelpCircle size={20} />} label="Help Center" path="#" />
                     <Link
                         to="/"
                         onClick={() => {

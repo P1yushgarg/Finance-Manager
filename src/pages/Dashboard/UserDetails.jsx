@@ -142,17 +142,17 @@ const UserDetails = () => {
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button
                             className="btn-icon-soft"
-                            style={{ padding: '0.6rem 1.2rem', borderRadius: '8px' }}
+                            style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', height: 'auto' }}
                             onClick={handleCancel}
                         >
-                            <X size={18} style={{ marginRight: '0.3rem' }} /> Cancel
+                            <X size={18} /> Cancel
                         </button>
                         <button
                             className="btn-primary"
-                            style={{ padding: '0.6rem 1.2rem', borderRadius: '8px' }}
+                            style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                             onClick={handleSave}
                         >
-                            <Check size={18} style={{ marginRight: '0.3rem' }} /> Save
+                            <Check size={18} /> Save
                         </button>
                     </div>
                 )}

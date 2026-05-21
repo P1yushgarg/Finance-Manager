@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 
@@ -8,6 +8,14 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        const sessionActive = sessionStorage.getItem('isLoggedIn');
+        if (storedUser && sessionActive === 'true') {
+            navigate('/dashboard');
+        }
+    }, [navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();

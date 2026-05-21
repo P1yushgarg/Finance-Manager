@@ -47,9 +47,9 @@ const Navbar = () => {
 
                     {user ? (
                         <div className="flex-center" style={{ gap: '1rem' }}>
-                            <div title={user.name} className="flex-center" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%)', color: 'white', fontWeight: 600, fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)' }}>
+                            <Link to="/dashboard/user-details" title={user.name} className="flex-center" style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%)', color: 'white', fontWeight: 600, fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 4px 10px rgba(139, 92, 246, 0.3)', textDecoration: 'none' }}>
                                 {getInitials(user.name)}
-                            </div>
+                            </Link>
                             <button onClick={handleLogout} className="flex-center" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.3s' }} title="Logout" onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'} onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}>
                                 <LogOut size={18} />
                             </button>
