@@ -21,6 +21,7 @@ const Overview = () => {
     const [viewingBillImage, setViewingBillImage] = useState(null);
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
     const [fabScannedFile, setFabScannedFile] = useState(null);
+    const [autoStartCamera, setAutoStartCamera] = useState(false);
     const fabCameraInputRef = useRef(null);
 
     useEffect(() => {
@@ -181,15 +182,29 @@ const Overview = () => {
     const handleFabFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            setAutoStartCamera(false);
             setFabScannedFile(file);
             setIsScanModalOpen(true);
         }
         e.target.value = '';
     };
 
+    const handleFabCameraClick = () => {
+        const isSecure = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        if (isSecure) {
+            setAutoStartCamera(true);
+            setIsScanModalOpen(true);
+        } else {
+            if (fabCameraInputRef.current) {
+                fabCameraInputRef.current.click();
+            }
+        }
+    };
+
     const closeScanModal = () => {
         setIsScanModalOpen(false);
         setFabScannedFile(null);
+        setAutoStartCamera(false);
     };
 
     const totalSpent = transactions.reduce((acc, curr) => acc + curr.amount, 0);
@@ -462,7 +477,7 @@ const Overview = () => {
 
             {/* Floating Camera Scan FAB Button */}
             <button 
-                onClick={() => fabCameraInputRef.current && fabCameraInputRef.current.click()}
+                onClick={handleFabCameraClick}
                 style={{ 
                     position: 'fixed', 
                     bottom: '5.5rem', 
@@ -529,6 +544,7 @@ const Overview = () => {
                             isModal={true} 
                             onClose={closeScanModal} 
                             initialFile={fabScannedFile} 
+                            autoStartCamera={autoStartCamera} 
                         />
                     </div>
                 </div>
