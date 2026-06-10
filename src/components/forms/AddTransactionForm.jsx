@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { PlusCircle, CreditCard, Banknote, Camera, Image as ImageIcon, Loader2, CheckCircle2, X } from 'lucide-react';
 import Tesseract from 'tesseract.js';
 
-const AddTransactionForm = ({ onAdd, isModal, onClose, autoTriggerScan }) => {
+const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile }) => {
     const [amount, setAmount] = useState('');
     const [recipient, setRecipient] = useState('');
     const [category, setCategory] = useState('Groceries');
@@ -16,12 +16,13 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, autoTriggerScan }) => {
     const [imageName, setImageName] = useState('');
     
     const fileInputRef = useRef(null);
+    const cameraInputRef = useRef(null);
 
     useEffect(() => {
-        if (autoTriggerScan && fileInputRef.current) {
-            fileInputRef.current.click();
+        if (initialFile) {
+            processFile(initialFile);
         }
-    }, [autoTriggerScan]);
+    }, [initialFile]);
 
     const categoriesList = [
         'Groceries',
@@ -117,10 +118,7 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, autoTriggerScan }) => {
         return 'Others';
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
+    const processFile = (file) => {
         setIsScanning(true);
         setScanStatus("Compressing image...");
         setImageName(file.name);
@@ -186,6 +184,11 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, autoTriggerScan }) => {
         reader.readAsDataURL(file);
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) processFile(file);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!amount || !recipient) return;
@@ -239,6 +242,14 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, autoTriggerScan }) => {
                         accept="image/*" 
                         style={{ display: 'none' }} 
                     />
+                    <input 
+                        type="file" 
+                        ref={cameraInputRef} 
+                        onChange={handleFileChange} 
+                        accept="image/*" 
+                        capture="environment"
+                        style={{ display: 'none' }} 
+                    />
                     
                     {isScanning ? (
                         <div style={{ background: 'rgba(249, 115, 22, 0.05)', border: '1px dashed var(--primary)', borderRadius: '10px', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', color: 'var(--primary)' }}>
@@ -263,7 +274,7 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, autoTriggerScan }) => {
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button
                                 type="button"
-                                onClick={() => fileInputRef.current.click()}
+                                onClick={() => cameraInputRef.current.click()}
                                 className="btn-secondary"
                                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', borderRadius: '10px', fontSize: '0.85rem' }}
                             >

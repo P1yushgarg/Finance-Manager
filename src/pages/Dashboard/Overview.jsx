@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowUpRight, ArrowDownRight, IndianRupee, Edit2, Check, Trash2, X, AlertCircle, Paperclip, Camera } from 'lucide-react';
 import AddTransactionForm from '../../components/forms/AddTransactionForm';
 import CategoryChart from '../../components/charts/CategoryChart';
@@ -20,6 +20,8 @@ const Overview = () => {
     const [selectedChart, setSelectedChart] = useState('daily');
     const [viewingBillImage, setViewingBillImage] = useState(null);
     const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+    const [fabScannedFile, setFabScannedFile] = useState(null);
+    const fabCameraInputRef = useRef(null);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -174,6 +176,20 @@ const Overview = () => {
             }
         }
         setIsEditingIncome(false);
+    };
+
+    const handleFabFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFabScannedFile(file);
+            setIsScanModalOpen(true);
+        }
+        e.target.value = '';
+    };
+
+    const closeScanModal = () => {
+        setIsScanModalOpen(false);
+        setFabScannedFile(null);
     };
 
     const totalSpent = transactions.reduce((acc, curr) => acc + curr.amount, 0);
@@ -434,9 +450,19 @@ const Overview = () => {
                 </div>
             )}
 
+            {/* Hidden Input for direct camera capture under user gesture context */}
+            <input 
+                type="file" 
+                ref={fabCameraInputRef} 
+                onChange={handleFabFileChange} 
+                accept="image/*" 
+                capture="environment" 
+                style={{ display: 'none' }} 
+            />
+
             {/* Floating Camera Scan FAB Button */}
             <button 
-                onClick={() => setIsScanModalOpen(true)}
+                onClick={() => fabCameraInputRef.current && fabCameraInputRef.current.click()}
                 style={{ 
                     position: 'fixed', 
                     bottom: '5.5rem', 
@@ -484,7 +510,7 @@ const Overview = () => {
                         backdropFilter: 'blur(8px)',
                         padding: '1.5rem'
                     }}
-                    onClick={() => setIsScanModalOpen(false)}
+                    onClick={closeScanModal}
                 >
                     <div 
                         className="animate-slide-up" 
@@ -498,11 +524,11 @@ const Overview = () => {
                         <AddTransactionForm 
                             onAdd={(newTx) => {
                                 handleAddTransaction(newTx);
-                                setIsScanModalOpen(false);
+                                closeScanModal();
                             }} 
                             isModal={true} 
-                            onClose={() => setIsScanModalOpen(false)} 
-                            autoTriggerScan={true} 
+                            onClose={closeScanModal} 
+                            initialFile={fabScannedFile} 
                         />
                     </div>
                 </div>
