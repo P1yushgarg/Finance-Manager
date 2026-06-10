@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 // POST a new transaction
 router.post('/', async (req, res) => {
   try {
-    const { user, recipient, amount, category, method, status, date } = req.body;
+    const { user, recipient, amount, category, method, status, date, billImage } = req.body;
 
     if (!user || !recipient || !amount || !category || !method) {
       return res.status(400).json({ error: 'Please provide all required fields (user, recipient, amount, category, method)' });
@@ -36,7 +36,8 @@ router.post('/', async (req, res) => {
       category,
       method,
       status,
-      date
+      date,
+      billImage: billImage || ''
     });
 
     const savedTransaction = await transaction.save();
@@ -50,10 +51,10 @@ router.post('/', async (req, res) => {
 // UPDATE a transaction
 router.put('/:id', async (req, res) => {
   try {
-    const { recipient, amount, category, method, status, date } = req.body;
+    const { recipient, amount, category, method, status, date, billImage } = req.body;
     const updatedTx = await Transaction.findByIdAndUpdate(
       req.params.id,
-      { recipient, amount, category, method, status, date },
+      { recipient, amount, category, method, status, date, billImage },
       { new: true }
     );
     if (!updatedTx) return res.status(404).json({ error: 'Transaction not found' });

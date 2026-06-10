@@ -30,6 +30,10 @@ const TransactionSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  billImage: {
+    type: String,
+    default: '',
+  },
 }, { timestamps: true });
 
 export default mongoose.model('Transaction', TransactionSchema);

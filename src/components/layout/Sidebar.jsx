@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Target, LogOut, Bell, User } from 'lucide-react';
+import { Home, CreditCard, Target, LogOut, BellRing, User } from 'lucide-react';
 
 const NavItem = ({ icon, label, path, isActive }) => (
     <Link
@@ -11,16 +11,31 @@ const NavItem = ({ icon, label, path, isActive }) => (
             padding: '0.8rem 1rem',
             borderRadius: '8px',
             color: isActive ? 'var(--text-main)' : 'var(--text-muted)',
-            background: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+            background: isActive 
+                ? 'linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.05) 100%)' 
+                : 'transparent',
             borderLeft: isActive ? '3px solid var(--primary)' : '3px solid transparent',
-            transition: 'all 0.2s',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             marginBottom: '0.2rem',
-            fontWeight: isActive ? 600 : 500
+            fontWeight: isActive ? 600 : 500,
+            transform: isActive ? 'translateX(4px)' : 'translateX(0)',
         }}
-        onMouseOver={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.background = 'rgba(0,0,0,0.05)' } }}
-        onMouseOut={(e) => { if (!isActive) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' } }}
+        onMouseOver={(e) => { 
+            if (!isActive) { 
+                e.currentTarget.style.color = 'var(--text-main)'; 
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; 
+                e.currentTarget.style.transform = 'translateX(2px)';
+            } 
+        }}
+        onMouseOut={(e) => { 
+            if (!isActive) { 
+                e.currentTarget.style.color = 'var(--text-muted)'; 
+                e.currentTarget.style.background = 'transparent'; 
+                e.currentTarget.style.transform = 'translateX(0)';
+            } 
+        }}
     >
-        <div style={{ color: isActive ? 'var(--primary)' : 'inherit' }}>
+        <div style={{ color: isActive ? 'var(--primary)' : 'inherit', transition: 'color 0.3s' }}>
             {icon}
         </div>
         <span>{label}</span>
@@ -33,7 +48,7 @@ const Sidebar = () => {
 
     // Removed unused handleLogout
     return (
-        <aside className="glass-panel" style={{
+        <aside className="glass-panel hidden-mobile" style={{
             width: '260px',
             height: 'calc(100vh - 80px)',
             position: 'sticky',
@@ -49,10 +64,10 @@ const Sidebar = () => {
             </div>
 
             <nav style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <NavItem icon={<LayoutDashboard size={20} />} label="Overview" path="/dashboard" isActive={currentPath === '/dashboard'} />
-                <NavItem icon={<ArrowLeftRight size={20} />} label="Transactions" path="/dashboard/transactions" isActive={currentPath === '/dashboard/transactions'} />
+                <NavItem icon={<Home size={20} />} label="Overview" path="/dashboard" isActive={currentPath === '/dashboard'} />
+                <NavItem icon={<CreditCard size={20} />} label="Transactions" path="/dashboard/transactions" isActive={currentPath === '/dashboard/transactions'} />
                 <NavItem icon={<Target size={20} />} label="Goals" path="/dashboard/goals" isActive={currentPath === '/dashboard/goals'} />
-                <NavItem icon={<Bell size={20} />} label="Alerts" path="/dashboard/alerts" isActive={currentPath === '/dashboard/alerts'} />
+                <NavItem icon={<BellRing size={20} />} label="Alerts" path="/dashboard/alerts" isActive={currentPath === '/dashboard/alerts'} />
                 <NavItem icon={<User size={20} />} label="User Details" path="/dashboard/user-details" isActive={currentPath === '/dashboard/user-details'} />
             </nav>
 

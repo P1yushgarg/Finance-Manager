@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import BottomNav from '../components/layout/BottomNav';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -16,9 +17,10 @@ const Dashboard = () => {
     return (
         <div style={{ display: 'flex' }}>
             <Sidebar />
-            <div className="container" style={{ flex: 1, padding: '3rem 2rem 5rem 2rem' }}>
+            <div className="container dashboard-content-wrapper" style={{ flex: 1 }}>
                 <Outlet />
             </div>
+            <BottomNav />
         </div>
     );
 };

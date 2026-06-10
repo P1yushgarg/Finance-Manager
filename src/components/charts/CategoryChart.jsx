@@ -16,7 +16,7 @@ const CategoryChart = ({ data }) => {
         { name: 'Dining', value: 300 },
         { name: 'Entertainment', value: 300 },
         { name: 'Shopping', value: 200 },
-        { name: 'Utilities', value: 278 }
+        { name: 'Eating Out', value: 278 }
     ];
 
     const COLORS = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];

@@ -143,13 +143,13 @@ const Goals = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
-            <header className="flex-between" style={{ marginBottom: '2rem' }}>
+            <header className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 className="text-hero" style={{ fontSize: '2.5rem' }}>Financial Goals</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>Track and manage your savings targets.</p>
+                    <h1 className="text-display">Financial Goals</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.3rem' }}>Track and manage your savings targets.</p>
                 </div>
                 {!isAdding && (
-                    <button className="btn-primary" onClick={() => setIsAdding(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button className="btn-primary" onClick={() => setIsAdding(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
                         <Target size={18} /> Add New Goal
                     </button>
                 )}
@@ -159,30 +159,30 @@ const Goals = () => {
 
                 {/* Summary Metrics */}
                 <div className="col-span-12 animate-slide-up">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-                        <div className="glass-panel" style={{ padding: '2rem' }}>
+                    <div className="goals-stats-grid">
+                        <div className="glass-panel stat-card-target" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                             <div className="flex-between" style={{ marginBottom: '1rem' }}>
                                 <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Target size={18} color="var(--primary)" /> Total Target
                                 </div>
                             </div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                                 ₹ {totalTarget.toLocaleString()}
                             </div>
                         </div>
 
-                        <div className="glass-panel" style={{ padding: '2rem' }}>
+                        <div className="glass-panel stat-card-saved" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                             <div className="flex-between" style={{ marginBottom: '1rem' }}>
                                 <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <TrendingUp size={18} color="var(--secondary)" /> Total Saved
                                 </div>
                             </div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
                                 ₹ {totalSaved.toLocaleString()}
                             </div>
                         </div>
 
-                        <div className="glass-panel" style={{ padding: '2rem' }}>
+                        <div className="glass-panel stat-card-progress" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                             <div className="flex-between" style={{ marginBottom: '1rem' }}>
                                 <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     Overall Progress
@@ -196,32 +196,33 @@ const Goals = () => {
                     </div>
                 </div>
 
+
                 {isAdding && (
-                    <div className="col-span-12 animate-slide-up" style={{ marginBottom: '2rem' }}>
-                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid var(--primary)' }}>
+                    <div className="col-span-12 animate-slide-up" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'center' }}>
+                        <div className="glass-panel" style={{ padding: '2rem', borderTop: '4px solid var(--primary)', width: '100%', maxWidth: '480px' }}>
                             <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
-                                <h3 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create New Goal</h3>
-                                <button onClick={() => setIsAdding(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={24} /></button>
+                                <h3 style={{ fontSize: '1.3rem', fontWeight: 600 }}>Create New Goal</h3>
+                                <button onClick={() => setIsAdding(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={20} /></button>
                             </div>
-                            <form onSubmit={handleAddSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                            <form onSubmit={handleAddSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
                                 <div className="input-group">
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Goal Title</label>
+                                    <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>Goal Title</label>
                                     <input type="text" className="input-field" required value={addForm.title} onChange={e => setAddForm({ ...addForm, title: e.target.value })} placeholder="e.g. Vacation" style={{ width: '100%' }} />
                                 </div>
                                 <div className="input-group">
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Target Amount (₹)</label>
+                                    <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>Target Amount (₹)</label>
                                     <input type="number" className="input-field" required value={addForm.targetAmount} onChange={e => setAddForm({ ...addForm, targetAmount: e.target.value })} placeholder="50000" style={{ width: '100%' }} min="1" />
                                 </div>
                                 <div className="input-group">
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Initial Saved (₹)</label>
+                                    <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>Initial Saved (₹)</label>
                                     <input type="number" className="input-field" required value={addForm.currentAmount} onChange={e => setAddForm({ ...addForm, currentAmount: e.target.value })} placeholder="10000" style={{ width: '100%' }} min="0" />
                                 </div>
                                 <div className="input-group">
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Deadline</label>
+                                    <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>Deadline</label>
                                     <input type="date" className="input-field" required value={addForm.deadline} onChange={e => setAddForm({ ...addForm, deadline: e.target.value })} style={{ width: '100%' }} />
                                 </div>
                                 <div className="input-group">
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Theme Color</label>
+                                    <label style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>Theme Color</label>
                                     <select className="input-field" value={addForm.color} onChange={e => setAddForm({ ...addForm, color: e.target.value })} style={{ width: '100%' }}>
                                         <option value="#3b82f6">Blue</option>
                                         <option value="#10b981">Green</option>
@@ -230,11 +231,9 @@ const Goals = () => {
                                         <option value="#8b5cf6">Purple</option>
                                     </select>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                                    <button type="submit" className="btn-primary" style={{ width: '100%', height: '42px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Plus size={18} /> Create Goal
-                                    </button>
-                                </div>
+                                <button type="submit" className="btn-primary" style={{ width: '100%', height: '42px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                    <Plus size={18} /> Create Goal
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -251,14 +250,14 @@ const Goals = () => {
                             No financial goals created yet. Start tracking your targets today!
                         </div>
                     ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                             {goals.map((goal) => {
                                 const isEditing = editingId === goal._id;
                                 const progress = calculateProgress(goal.currentAmount, goal.targetAmount);
 
                                 if (isEditing) {
                                     return (
-                                        <div key={goal._id} className="glass-panel" style={{ padding: '1.5rem', borderTop: `4px solid ${editForm.color}`, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div key={goal._id} className="glass-panel" style={{ padding: '1.5rem', borderTop: `4px solid ${editForm.color}`, display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
                                             <div className="flex-between">
                                                 <h4 style={{ fontWeight: 600 }}>Edit Goal</h4>
                                                 <button onClick={() => handleDelete(goal._id)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer' }}><Trash2 size={18} /></button>
@@ -287,28 +286,28 @@ const Goals = () => {
                                 }
 
                                 return (
-                                    <div key={goal._id} className="glass-panel" style={{ padding: '2rem', borderTop: `4px solid ${goal.color}`, display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                                    <div key={goal._id} className="glass-panel" style={{ padding: '2rem', borderTop: `4px solid ${goal.color}`, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '1.5rem', position: 'relative', transition: 'transform 0.2s', cursor: 'pointer', width: '100%' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
 
                                         <button onClick={() => startEditing(goal)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-main)'} onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
                                             <Edit2 size={18} />
                                         </button>
 
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingRight: '1rem' }}>
-                                            <div style={{ padding: '0.8rem', background: `${goal.color}20`, borderRadius: '12px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', width: '100%' }}>
+                                            <div style={{ padding: '0.8rem', background: `${goal.color}20`, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 {getDynamicIcon(goal.title, goal.color)}
                                             </div>
                                             <div>
-                                                <h4 style={{ fontSize: '1.1rem', fontWeight: 600, wordBreak: 'break-word', paddingRight: '1rem' }}>{goal.title}</h4>
-                                                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
+                                                <h4 style={{ fontSize: '1.1rem', fontWeight: 600, wordBreak: 'break-word' }}>{goal.title}</h4>
+                                                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', marginTop: '0.2rem' }}>
                                                     <Calendar size={14} /> Due {formatDate(goal.deadline)}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <div className="flex-between" style={{ marginBottom: '0.8rem' }}>
+                                        <div style={{ width: '100%' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem', marginBottom: '0.8rem' }}>
                                                 <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>₹ {goal.currentAmount.toLocaleString()}</span>
-                                                <span style={{ color: 'var(--text-muted)' }}>of ₹ {goal.targetAmount.toLocaleString()}</span>
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>of ₹ {goal.targetAmount.toLocaleString()}</span>
                                             </div>
 
                                             <div style={{ position: 'relative', paddingTop: '10px' }}>
@@ -321,7 +320,7 @@ const Goals = () => {
                                             </div>
                                         </div>
 
-                                        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                        <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', width: '100%' }}>
                                             <span style={{ color: 'var(--text-muted)' }}>Remaining:</span>
                                             <span style={{ fontWeight: 600 }}>₹ {(goal.targetAmount - goal.currentAmount).toLocaleString()}</span>
                                         </div>

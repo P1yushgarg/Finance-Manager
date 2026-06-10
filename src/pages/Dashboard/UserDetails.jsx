@@ -125,21 +125,21 @@ const UserDetails = () => {
 
     return (
         <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
-            <header className="flex-between" style={{ marginBottom: '3rem' }}>
+            <header className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 className="text-hero" style={{ fontSize: '2.5rem' }}>User Details</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>Manage your profile and account activity.</p>
+                    <h1 className="text-display">User Details</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.3rem' }}>Manage your profile and account activity.</p>
                 </div>
                 {!isEditing ? (
                     <button
                         className="btn-primary"
-                        style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}
                         onClick={() => setIsEditing(true)}
                     >
                         <Edit2 size={18} /> Edit Profile
                     </button>
                 ) : (
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', height: 'fit-content' }}>
                         <button
                             className="btn-icon-soft"
                             style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'auto', height: 'auto' }}
@@ -174,11 +174,11 @@ const UserDetails = () => {
 
             <div className="dashboard-grid">
                 <div className="col-span-8 glass-panel animate-slide-up" style={{ padding: '2.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem' }}>
-                        <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.5rem', fontWeight: 700, boxShadow: '0 8px 24px rgba(139, 92, 246, 0.35)', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '2rem', flexWrap: 'wrap' }}>
+                        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.2rem', fontWeight: 700, boxShadow: '0 8px 24px rgba(139, 92, 246, 0.35)', flexShrink: 0 }}>
                             {displayUser.name.charAt(0).toUpperCase()}
                         </div>
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: '1 1 200px' }}>
                             {isEditing ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                     <input
@@ -221,18 +221,26 @@ const UserDetails = () => {
                 <div className="col-span-4 animate-slide-up delay-100" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div className="glass-panel" style={{ padding: '2.5rem' }}>
                         <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '1.5rem' }}>Security & Activity</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-muted)' }}>
-                                <Clock size={20} />
-                                <span style={{ fontWeight: 500 }}>Last Login</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.4rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(249, 115, 22, 0.12)', color: 'var(--primary)' }}>
+                                        <Clock size={16} />
+                                    </div>
+                                    <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>Last Login</span>
+                                </div>
+                                <p style={{ fontWeight: 600, fontSize: '1.1rem', paddingLeft: '2.5rem' }}>{displayUser.lastLogin}</p>
                             </div>
-                            <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '1rem' }}>{displayUser.lastLogin}</p>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: 'var(--text-muted)' }}>
-                                <Shield size={20} />
-                                <span style={{ fontWeight: 500 }}>Account Status</span>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.4rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)' }}>
+                                        <Shield size={16} />
+                                    </div>
+                                    <span style={{ fontWeight: 500, color: 'var(--text-muted)' }}>Account Status</span>
+                                </div>
+                                <p style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--success)', paddingLeft: '2.5rem' }}>{displayUser.accountStatus}</p>
                             </div>
-                            <p style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--success)' }}>{displayUser.accountStatus}</p>
                         </div>
                     </div>
 

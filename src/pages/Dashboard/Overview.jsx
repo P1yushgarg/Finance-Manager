@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownRight, IndianRupee, Edit2, Check, Trash2, X, AlertCircle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, IndianRupee, Edit2, Check, Trash2, X, AlertCircle, Paperclip, Camera } from 'lucide-react';
 import AddTransactionForm from '../../components/forms/AddTransactionForm';
 import CategoryChart from '../../components/charts/CategoryChart';
 import DailySpendChart from '../../components/charts/DailySpendChart';
+import PaymentMethodChart from '../../components/charts/PaymentMethodChart';
+import WeeklyActivityChart from '../../components/charts/WeeklyActivityChart';
 
 const Overview = () => {
     const [transactions, setTransactions] = useState([]);
@@ -15,6 +17,9 @@ const Overview = () => {
 
     const [editingTxId, setEditingTxId] = useState(null);
     const [editTxData, setEditTxData] = useState({});
+    const [selectedChart, setSelectedChart] = useState('daily');
+    const [viewingBillImage, setViewingBillImage] = useState(null);
+    const [isScanModalOpen, setIsScanModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchAllData = async () => {
@@ -71,7 +76,8 @@ const Overview = () => {
                 recipient: newTx.recipient,
                 amount: newTx.amount,
                 category: newTx.category,
-                method: newTx.method
+                method: newTx.method,
+                billImage: newTx.billImage || ''
             };
 
             const response = await fetch('/api/transactions', {
@@ -176,10 +182,10 @@ const Overview = () => {
 
     return (
         <div className="animate-fade-in">
-            <header className="flex-between" style={{ marginBottom: '3rem' }}>
+            <header className="flex-between" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 className="text-hero" style={{ fontSize: '2.5rem' }}>Overview</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', marginTop: '0.5rem' }}>Here's your comprehensive financial overview</p>
+                    <h1 className="text-display">Overview</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.3rem' }}>Here's your comprehensive financial overview</p>
                 </div>
             </header>
 
@@ -200,8 +206,8 @@ const Overview = () => {
             )}
 
             {/* TOP ROW: Large Stat Cards */}
-            <div className="dashboard-grid animate-slide-up" style={{ marginBottom: '3rem' }}>
-                <div className="col-span-4">
+            <div className="overview-stats-grid animate-slide-up">
+                <div className="stat-card-income">
                     <EditableStatCard
                         title="Total Income"
                         amount={income}
@@ -213,7 +219,7 @@ const Overview = () => {
                         saveFunc={saveIncome}
                     />
                 </div>
-                <div className="col-span-4">
+                <div className="stat-card-spent">
                     <StatCard
                         title="Total Spent"
                         amount={totalSpent}
@@ -221,7 +227,7 @@ const Overview = () => {
                         isNegative
                     />
                 </div>
-                <div className="col-span-4">
+                <div className="stat-card-balance">
                     <NetBalanceCard
                         netBalance={netBalance}
                         isOverspent={isOverspent}
@@ -229,14 +235,56 @@ const Overview = () => {
                 </div>
             </div>
 
+
             {/* MIDDLE ROW: Visual Analytics */}
-            <div className="dashboard-grid" style={{ marginBottom: '3rem', alignItems: 'stretch' }}>
-                <div className="col-span-8">
-                    <DailySpendChart data={transactions} />
+            <div className="flex-between" style={{ marginBottom: '1.2rem', marginTop: '0.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 600, color: 'var(--text-main)' }}>Analytics</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>Select Chart:</span>
+                    <select
+                        className="input-field"
+                        style={{
+                            width: '200px',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '8px',
+                            padding: '0.5rem 1rem',
+                            color: 'var(--text-main)',
+                            fontWeight: 500,
+                            cursor: 'pointer'
+                        }}
+                        value={selectedChart}
+                        onChange={e => setSelectedChart(e.target.value)}
+                    >
+                        <option value="daily" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Daily Spend</option>
+                        <option value="category" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Category Spend</option>
+                        <option value="method" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Payment Method</option>
+                        <option value="weekly" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Weekly Activity</option>
+                    </select>
                 </div>
-                <div className="col-span-4">
-                    <CategoryChart data={transactions} />
-                </div>
+            </div>
+
+            <div className="dashboard-grid" style={{ marginBottom: '1.5rem', alignItems: 'stretch' }}>
+                {selectedChart === 'daily' && (
+                    <div className="col-span-12">
+                        <DailySpendChart data={transactions} />
+                    </div>
+                )}
+                {selectedChart === 'category' && (
+                    <div className="col-span-12">
+                        <CategoryChart data={transactions} />
+                    </div>
+                )}
+                {selectedChart === 'method' && (
+                    <div className="col-span-12">
+                        <PaymentMethodChart data={transactions} />
+                    </div>
+                )}
+                {selectedChart === 'weekly' && (
+                    <div className="col-span-12">
+                        <WeeklyActivityChart data={transactions} />
+                    </div>
+                )}
             </div>
 
             {/* BOTTOM ROW: Transactions & Management */}
@@ -267,8 +315,15 @@ const Overview = () => {
                                                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                     <input type="text" className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} placeholder="Recipient" value={editTxData.recipient} onChange={e => setEditTxData({...editTxData, recipient: e.target.value})} />
                                                     <select className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} value={editTxData.category} onChange={e => setEditTxData({...editTxData, category: e.target.value})}>
-                                                        {['Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 'Bills & Utilities', 'Groceries', 'Healthcare', 'Others'].map(c => <option key={c} value={c}>{c}</option>)}
+                                                        {(() => {
+                                                            const baseCategories = ['Groceries', 'Food & Dining', 'Rent & Housing', 'Bills & Utilities', 'Transportation', 'Shopping', 'Entertainment', 'Healthcare', 'Education', 'Travel', 'Others'];
+                                                            const uniqueCategories = baseCategories.includes(editTxData.category)
+                                                                ? baseCategories
+                                                                : [editTxData.category, ...baseCategories];
+                                                            return uniqueCategories.map(c => <option key={c} value={c}>{c}</option>);
+                                                        })()}
                                                     </select>
+
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                     <select className="input-field" style={{ flex: 1, minWidth: '120px', padding: '0.6rem' }} value={editTxData.method} onChange={e => setEditTxData({...editTxData, method: e.target.value})}>
@@ -292,7 +347,20 @@ const Overview = () => {
                                         <div key={tx._id} className="flex-between" style={{ padding: '0.8rem 0.5rem', borderBottom: '1px solid var(--border)', transition: 'background 0.2s', borderRadius: '8px' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontWeight: 500, fontSize: '1.05rem', color: 'var(--text-main)' }}>{tx.recipient || tx.category}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <span style={{ fontWeight: 500, fontSize: '1.05rem', color: 'var(--text-main)' }}>{tx.recipient || tx.category}</span>
+                                                        {tx.billImage && (
+                                                            <button 
+                                                                onClick={() => setViewingBillImage(tx.billImage)}
+                                                                style={{ background: 'rgba(249, 115, 22, 0.08)', border: '1px solid rgba(249, 115, 22, 0.2)', color: 'var(--primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', transition: 'all 0.2s' }}
+                                                                title="View Receipt"
+                                                                onMouseOver={e => { e.currentTarget.style.background = 'rgba(249, 115, 22, 0.15)'; }}
+                                                                onMouseOut={e => { e.currentTarget.style.background = 'rgba(249, 115, 22, 0.08)'; }}
+                                                            >
+                                                                <Paperclip size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{tx.category} • {tx.method} • {new Date(tx.date).toLocaleDateString()}</span>
                                                 </div>
                                             </div>
@@ -315,6 +383,130 @@ const Overview = () => {
                     </div>
                 </div>
             </div>
+            {/* Receipt Viewer Modal */}
+            {viewingBillImage && (
+                <div 
+                    className="flex-center animate-fade-in" 
+                    style={{ 
+                        position: 'fixed', 
+                        top: 0, 
+                        left: 0, 
+                        right: 0, 
+                        bottom: 0, 
+                        background: 'rgba(0,0,0,0.7)', 
+                        zIndex: 9999, 
+                        backdropFilter: 'blur(8px)',
+                        padding: '1.5rem'
+                    }}
+                    onClick={() => setViewingBillImage(null)}
+                >
+                    <div 
+                        className="glass-panel animate-slide-up" 
+                        style={{ 
+                            maxWidth: '500px', 
+                            width: '100%', 
+                            padding: '1.5rem', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '1rem',
+                            position: 'relative' 
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex-between" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.8rem' }}>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>Attached Receipt</h3>
+                            <button 
+                                className="btn-icon-soft" 
+                                onClick={() => setViewingBillImage(null)}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'center', background: '#000', borderRadius: '12px', overflow: 'hidden', maxHeight: '400px', border: '1px solid var(--border)' }}>
+                            <img 
+                                src={viewingBillImage} 
+                                alt="Scanned Bill" 
+                                style={{ width: '100%', height: 'auto', objectFit: 'contain', maxHeight: '400px' }} 
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Floating Camera Scan FAB Button */}
+            <button 
+                onClick={() => setIsScanModalOpen(true)}
+                style={{ 
+                    position: 'fixed', 
+                    bottom: '5.5rem', 
+                    right: '1.5rem', 
+                    background: 'linear-gradient(135deg, var(--primary) 0%, #ec4899 100%)', 
+                    color: '#fff', 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    boxShadow: '0 4px 20px rgba(249, 115, 22, 0.4), 0 0 0 1px rgba(255,255,255,0.1)', 
+                    border: 'none',
+                    cursor: 'pointer', 
+                    zIndex: 999, 
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' 
+                }}
+                title="Scan Receipt & Add Expense"
+                className="fab-camera-button animate-slide-up"
+                onMouseOver={e => {
+                    e.currentTarget.style.transform = 'scale(1.1) translateY(-3px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(249, 115, 22, 0.5), 0 0 0 2px rgba(255,255,255,0.2)';
+                }}
+                onMouseOut={e => {
+                    e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(249, 115, 22, 0.4), 0 0 0 1px rgba(255,255,255,0.1)';
+                }}
+            >
+                <Camera size={26} />
+            </button>
+
+            {/* Add Transaction Modal Overlay */}
+            {isScanModalOpen && (
+                <div 
+                    className="flex-center animate-fade-in" 
+                    style={{ 
+                        position: 'fixed', 
+                        top: 0, 
+                        left: 0, 
+                        right: 0, 
+                        bottom: 0, 
+                        background: 'rgba(0,0,0,0.7)', 
+                        zIndex: 1000, 
+                        backdropFilter: 'blur(8px)',
+                        padding: '1.5rem'
+                    }}
+                    onClick={() => setIsScanModalOpen(false)}
+                >
+                    <div 
+                        className="animate-slide-up" 
+                        style={{ 
+                            maxWidth: '480px', 
+                            width: '100%', 
+                            zIndex: 1001 
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <AddTransactionForm 
+                            onAdd={(newTx) => {
+                                handleAddTransaction(newTx);
+                                setIsScanModalOpen(false);
+                            }} 
+                            isModal={true} 
+                            onClose={() => setIsScanModalOpen(false)} 
+                            autoTriggerScan={true} 
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -322,8 +514,8 @@ const Overview = () => {
 /* Components internal to Dashboard */
 
 const StatCard = ({ title, amount, icon, isNegative }) => (
-    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', height: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isNegative ? 'var(--danger)' : 'var(--success)' }}>
+    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.5rem', height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: isNegative ? 'var(--danger)' : 'var(--success)' }}>
             {icon}
             <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>{title}</span>
         </div>
@@ -332,8 +524,8 @@ const StatCard = ({ title, amount, icon, isNegative }) => (
 );
 
 const NetBalanceCard = ({ netBalance, isOverspent }) => (
-    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', height: '100%', border: isOverspent ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(16,185,129,0.25)', transition: 'border 0.3s' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: isOverspent ? 'var(--danger)' : 'var(--success)' }}>
+    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.5rem', height: '100%', border: isOverspent ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(16,185,129,0.25)', transition: 'border 0.3s' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: isOverspent ? 'var(--danger)' : 'var(--success)' }}>
             {isOverspent
                 ? <ArrowDownRight size={32} color="var(--danger)" />
                 : <ArrowUpRight size={32} color="var(--success)" />}
@@ -349,28 +541,28 @@ const NetBalanceCard = ({ netBalance, isOverspent }) => (
 );
 
 const EditableStatCard = ({ title, amount, icon, isEditing, setIsEditing, tempValue, setTempValue, saveFunc }) => (
-    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', height: '100%', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', width: '100%' }}>
+    <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '0.5rem', height: '100%', position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', width: '100%' }}>
             {icon}
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500, flex: 1 }}>{title}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>{title}</span>
             {!isEditing ? (
-                <button className="btn-icon-soft" style={{ width: '24px', height: '24px' }} onClick={() => { setIsEditing(true); setTempValue(amount); }} title="Edit">
+                <button className="btn-icon-soft" style={{ width: '24px', height: '24px', position: 'absolute', top: '1rem', right: '1rem' }} onClick={() => { setIsEditing(true); setTempValue(amount); }} title="Edit">
                     <Edit2 size={14} />
                 </button>
             ) : (
-                <button className="btn-icon-soft" style={{ width: '24px', height: '24px', background: 'var(--primary)', color: 'white' }} onClick={saveFunc} title="Save">
+                <button className="btn-icon-soft" style={{ width: '24px', height: '24px', background: 'var(--primary)', color: 'white', position: 'absolute', top: '1rem', right: '1rem' }} onClick={saveFunc} title="Save">
                     <Check size={14} />
                 </button>
             )}
         </div>
 
         {isEditing ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem', marginTop: '0.5rem', width: '100%' }}>
                 <span style={{ fontSize: '1.5rem', fontWeight: 600 }}>₹</span>
                 <input
                     type="number"
                     className="input-field input-ghost"
-                    style={{ fontSize: '1.5rem', fontWeight: 600, padding: 0 }}
+                    style={{ fontSize: '1.5rem', fontWeight: 600, padding: 0, textAlign: 'center' }}
                     value={tempValue}
                     onChange={e => setTempValue(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && saveFunc()}

@@ -18,7 +18,7 @@ const ContactUs = () => {
 
     return (
         <>
-            <div className="container dashboard-grid" style={{ padding: '4rem 2rem 8rem 2rem', alignItems: 'start', maxWidth: '1200px', margin: '0 auto' }}>
+            <div className="container dashboard-grid marketing-page-wrapper" style={{ alignItems: 'start', maxWidth: '1200px', margin: '0 auto' }}>
 
                 {/* Contact Info */}
                 <div className="col-span-5 animate-slide-up" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -75,7 +75,7 @@ const ContactUs = () => {
                         <form className="glass-panel" style={{ padding: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }} onSubmit={handleSubmit}>
                             <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1rem' }}>Send a Message</h3>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                            <div className="name-grid">
                                 <div className="input-group">
                                     <label>First Name</label>
                                     <input type="text" className="input-field" placeholder="John" required />
