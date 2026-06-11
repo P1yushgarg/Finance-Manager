@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import transactionRoutes from './routes/transactions.js';
 import alertRoutes from './routes/alerts.js';
 import goalRoutes from './routes/goals.js';
+import ocrRoutes from './routes/ocr.js';
 import connectDB from './config/db.js';
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/ocr', ocrRoutes);
 
 
 import path from 'path';

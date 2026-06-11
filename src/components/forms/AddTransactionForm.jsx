@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { PlusCircle, CreditCard, Banknote, Camera, Image as ImageIcon, Loader2, CheckCircle2, X } from 'lucide-react';
 import Tesseract from 'tesseract.js';
 
-const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCamera }) => {
+const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile }) => {
     const [amount, setAmount] = useState('');
     const [recipient, setRecipient] = useState('');
     const [category, setCategory] = useState('Groceries');
@@ -18,26 +18,11 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCam
     const fileInputRef = useRef(null);
     const cameraInputRef = useRef(null);
 
-    // Live camera states
-    const [isLiveCamera, setIsLiveCamera] = useState(false);
-    const videoRef = useRef(null);
-    const streamRef = useRef(null);
-
     useEffect(() => {
         if (initialFile) {
             processFile(initialFile);
-        } else if (autoStartCamera) {
-            startLiveCamera();
         }
-    }, [initialFile, autoStartCamera]);
-
-    useEffect(() => {
-        return () => {
-            if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => track.stop());
-            }
-        };
-    }, []);
+    }, [initialFile]);
 
     const categoriesList = [
         'Groceries',
@@ -133,9 +118,55 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCam
         return 'Others';
     };
 
-    const runOCR = (base64Image) => {
+    const runOCR = async (base64Image) => {
         setIsScanning(true);
-        setScanStatus("Running AI OCR Scan...");
+        setScanStatus("Analyzing with Google Gemini AI...");
+        
+        try {
+            const response = await fetch('/api/ocr/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ billImage: base64Image })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setIsScanning(false);
+                setScanStatus('');
+
+                if (data.amount && parseFloat(data.amount) > 0) {
+                    onAdd({
+                        amount: parseFloat(data.amount),
+                        recipient: data.recipient || 'Scanned Merchant',
+                        category: data.category || 'Others',
+                        method,
+                        date: new Date().toISOString(),
+                        billImage: base64Image
+                    });
+
+                    // Reset state
+                    setAmount('');
+                    setRecipient('');
+                    setCustomCategory('');
+                    setCategory('Groceries');
+                    setBillImage('');
+                    setImageName('');
+                } else {
+                    // Amount not found or zero, prefill other scanned details
+                    if (data.recipient) setRecipient(data.recipient);
+                    if (data.category) setCategory(data.category);
+                    setBillImage(base64Image); // retain the bill image so user can submit it
+                }
+                return; // Exit successfully
+            }
+            
+            console.warn("AI scanning endpoint failed or not configured, falling back to local Tesseract OCR");
+        } catch (err) {
+            console.error("Failed to call AI scanning endpoint:", err);
+        }
+
+        // --- Fallback to local offline Tesseract OCR ---
+        setScanStatus("Running local Tesseract OCR...");
         
         Tesseract.recognize(
             base64Image,
@@ -150,12 +181,36 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCam
             const parsedRecipient = extractRecipient(text);
             const parsedCategory = extractCategory(text);
             
-            if (parsedAmount) setAmount(parsedAmount.toString());
-            if (parsedRecipient) setRecipient(parsedRecipient);
-            if (parsedCategory) setCategory(parsedCategory);
-            
             setIsScanning(false);
             setScanStatus('');
+
+            if (parsedAmount) {
+                // Auto-submit transaction since we extracted a valid amount
+                const finalRecipient = parsedRecipient || 'Scanned Merchant';
+                const finalCategory = parsedCategory || 'Others';
+                
+                onAdd({
+                    amount: parseFloat(parsedAmount),
+                    recipient: finalRecipient,
+                    category: finalCategory,
+                    method,
+                    date: new Date().toISOString(),
+                    billImage: base64Image
+                });
+
+                // Reset state
+                setAmount('');
+                setRecipient('');
+                setCustomCategory('');
+                setCategory('Groceries');
+                setBillImage('');
+                setImageName('');
+            } else {
+                // Could not determine amount automatically, fill in whatever we found and let the user add manually
+                if (parsedRecipient) setRecipient(parsedRecipient);
+                if (parsedCategory) setCategory(parsedCategory);
+                setBillImage(base64Image); // retain the bill image so user can submit it
+            }
         }).catch(err => {
             console.error("OCR scanning error", err);
             setIsScanning(false);
@@ -163,76 +218,7 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCam
         });
     };
 
-    const startLiveCamera = async () => {
-        try {
-            setIsLiveCamera(true);
-            setIsScanning(false);
-            setScanStatus('');
-            
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-                audio: false
-            });
-            
-            streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                videoRef.current.onloadedmetadata = () => {
-                    videoRef.current.play().catch(e => console.error("Play failed", e));
-                };
-            }
-        } catch (err) {
-            console.error("Error starting live camera:", err);
-            setIsLiveCamera(false);
-            if (cameraInputRef.current) {
-                cameraInputRef.current.click();
-            }
-        }
-    };
 
-    const stopLiveCamera = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop());
-            streamRef.current = null;
-        }
-        setIsLiveCamera(false);
-    };
-
-    const capturePhoto = () => {
-        if (videoRef.current) {
-            const video = videoRef.current;
-            const canvas = document.createElement('canvas');
-            
-            let width = video.videoWidth || 640;
-            let height = video.videoHeight || 480;
-            const MAX_SIZE = 800;
-            
-            if (width > height) {
-                if (width > MAX_SIZE) {
-                    height = Math.round((height * MAX_SIZE) / width);
-                    width = MAX_SIZE;
-                }
-            } else {
-                if (height > MAX_SIZE) {
-                    width = Math.round((width * MAX_SIZE) / height);
-                    height = MAX_SIZE;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, width, height);
-            
-            stopLiveCamera();
-            
-            const base64Image = canvas.toDataURL('image/jpeg', 0.7);
-            setBillImage(base64Image);
-            setImageName('Captured_Bill.jpg');
-            runOCR(base64Image);
-        }
-    };
 
     const processFile = (file) => {
         setIsScanning(true);
@@ -341,53 +327,7 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCam
                         style={{ display: 'none' }} 
                     />
                     
-                    {isLiveCamera ? (
-                        <div style={{
-                            position: 'relative',
-                            width: '100%',
-                            height: '240px',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            background: '#000',
-                            border: '1px solid var(--border)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <video 
-                                ref={videoRef} 
-                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
-                                playsInline 
-                                muted 
-                            />
-                            <div style={{
-                                position: 'relative',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                gap: '0.8rem',
-                                padding: '0.8rem',
-                                zIndex: 2,
-                                background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)'
-                            }}>
-                                <button
-                                    type="button"
-                                    className="btn-primary"
-                                    onClick={capturePhoto}
-                                    style={{ padding: '0.5rem 1rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
-                                >
-                                    <CheckCircle2 size={15} /> Capture Photo
-                                </button>
-                                <button
-                                    type="button"
-                                    className="btn-secondary"
-                                    onClick={stopLiveCamera}
-                                    style={{ padding: '0.5rem 1rem', borderRadius: '20px', background: 'rgba(239, 68, 68, 0.25)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.4)', fontSize: '0.85rem' }}
-                                >
-                                    <X size={15} /> Cancel
-                                </button>
-                            </div>
-                        </div>
-                    ) : isScanning ? (
+                    {isScanning ? (
                         <div style={{ background: 'rgba(249, 115, 22, 0.05)', border: '1px dashed var(--primary)', borderRadius: '10px', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', color: 'var(--primary)' }}>
                             <Loader2 className="animate-spin" size={20} />
                             <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{scanStatus}</span>
@@ -410,13 +350,7 @@ const AddTransactionForm = ({ onAdd, isModal, onClose, initialFile, autoStartCam
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button
                                 type="button"
-                                onClick={() => {
-                                    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                                        startLiveCamera();
-                                    } else {
-                                        cameraInputRef.current.click();
-                                    }
-                                }}
+                                onClick={() => cameraInputRef.current.click()}
                                 className="btn-secondary"
                                 style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.6rem', borderRadius: '10px', fontSize: '0.85rem' }}
                             >
